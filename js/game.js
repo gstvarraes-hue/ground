@@ -380,17 +380,17 @@ TGH.Game.prototype.renderMenu = function (ctx, W, H) {
     ctx.fillText('mas nunca desiste!', W / 2, H / 2);
 
     // Prompt
-    var blink = Math.sin(this.animTime * 4) > 0;
+    var blink = Math.sin(this.animTime * 6) > 0;
     if (blink) {
         ctx.fillStyle = '#ffffff';
-        ctx.font = '12px "Press Start 2P", monospace';
-        ctx.fillText('PRESSIONE ENTER PARA JOGAR', W / 2, H / 2 + 80);
+        ctx.font = '10px "Press Start 2P", monospace';
+        ctx.fillText('PRESSIONE ENTER OU CLIQUE', W / 2, H / 2 + 80);
     }
 
     // Controls info
-    ctx.fillStyle = '#505070';
+    ctx.fillStyle = '#8080a0';
     ctx.font = '8px "Press Start 2P", monospace';
-    ctx.fillText('← → PARA MOVER', W / 2, H - 60);
+    ctx.fillText('SETAS ESQUERDA/DIREITA PARA MOVER', W / 2, H - 60);
     ctx.fillText('7 FASES DE PURA ESTRATÉGIA', W / 2, H - 40);
 };
 
@@ -522,11 +522,11 @@ TGH.Game.prototype.renderLevelIntro = function (ctx, W, H) {
     ctx.font = '10px "Press Start 2P", monospace';
     ctx.fillText(this.levelData.subtitle, W / 2, H / 2 + 10);
 
-    var blink = Math.sin(this.animTime * 4) > 0;
+    var blink = Math.sin(this.animTime * 6) > 0;
     if (blink) {
         ctx.fillStyle = '#ffffff';
         ctx.font = '8px "Press Start 2P", monospace';
-        ctx.fillText('PRESSIONE ENTER', W / 2, H / 2 + 60);
+        ctx.fillText('PRESSIONE ENTER OU CLIQUE', W / 2, H / 2 + 60);
     }
 };
 
@@ -543,11 +543,11 @@ TGH.Game.prototype.renderGameOver = function (ctx, W, H) {
     ctx.font = '10px "Press Start 2P", monospace';
     ctx.fillText('Você não conseguiu escapar...', W / 2, H / 2 + 20);
 
-    var blink = Math.sin(this.animTime * 4) > 0;
+    var blink = Math.sin(this.animTime * 6) > 0;
     if (blink) {
         ctx.fillStyle = '#ffffff';
         ctx.font = '10px "Press Start 2P", monospace';
-        ctx.fillText('PRESSIONE ENTER', W / 2, H / 2 + 70);
+        ctx.fillText('PRESSIONE ENTER OU CLIQUE', W / 2, H / 2 + 70);
     }
 };
 
@@ -580,11 +580,11 @@ TGH.Game.prototype.renderVictory = function (ctx, W, H) {
     ctx.fillText('O Herói Aterrado completou', W / 2, H / 2 + 30);
     ctx.fillText('todas as 7 fases!', W / 2, H / 2 + 50);
 
-    var blink = Math.sin(this.animTime * 4) > 0;
+    var blink = Math.sin(this.animTime * 6) > 0;
     if (blink) {
         ctx.fillStyle = '#ffffff';
         ctx.font = '10px "Press Start 2P", monospace';
-        ctx.fillText('PRESSIONE ENTER', W / 2, H / 2 + 100);
+        ctx.fillText('PRESSIONE ENTER OU CLIQUE', W / 2, H / 2 + 100);
     }
 
     TGH.Particles.render(ctx, 0, 0);

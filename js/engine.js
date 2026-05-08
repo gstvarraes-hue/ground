@@ -23,6 +23,13 @@ TGH.Input = {
         window.addEventListener('keyup', function (e) {
             self.keys[e.key] = false;
         });
+        // Click/Touch support for starting/interacting
+        window.addEventListener('mousedown', function () {
+            self.justPressed['Click'] = true;
+        });
+        window.addEventListener('touchstart', function () {
+            self.justPressed['Click'] = true;
+        });
     },
 
     isDown: function (key) {
@@ -30,8 +37,9 @@ TGH.Input = {
     },
 
     wasPressed: function (key) {
-        if (this.justPressed[key]) {
+        if (this.justPressed[key] || (key === 'Enter' && this.justPressed['Click'])) {
             this.justPressed[key] = false;
+            this.justPressed['Click'] = false;
             return true;
         }
         return false;

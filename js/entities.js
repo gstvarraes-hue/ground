@@ -154,6 +154,7 @@ TGH.Patroller = function (x, y, range, speed) {
 TGH.Patroller.prototype.update = function (dt, tileMap) {
     this.x += this.speed * this.dir * dt;
 
+    // Range limits
     if (this.x > this.startX + this.range) {
         this.dir = -1;
         this.x = this.startX + this.range;
@@ -163,12 +164,29 @@ TGH.Patroller.prototype.update = function (dt, tileMap) {
         this.x = this.startX;
     }
 
+    // Horizontal wall collision - reverse on hitting walls
+    var T = TGH.TILE;
+    var checkCol, checkRow;
+    if (this.dir > 0) {
+        checkCol = Math.floor((this.x + this.w) / T);
+    } else {
+        checkCol = Math.floor(this.x / T);
+    }
+    checkRow = Math.floor((this.y + this.h / 2) / T);
+    if (TGH.Physics.isSolid(tileMap, checkCol, checkRow)) {
+        this.dir *= -1;
+        if (this.dir > 0) {
+            this.x = (checkCol + 1) * T;
+        } else {
+            this.x = checkCol * T - this.w;
+        }
+    }
+
     // Gravity
     this.vy += TGH.Physics.GRAVITY * dt;
     if (this.vy > TGH.Physics.MAX_FALL) this.vy = TGH.Physics.MAX_FALL;
 
-    // Simple Y collision
-    var T = TGH.TILE;
+    // Y collision
     this.y += this.vy * dt;
     var bottom = Math.floor((this.y + this.h) / T);
     var col = Math.floor((this.x + this.w / 2) / T);
@@ -397,9 +415,9 @@ TGH.WindZone.prototype.render = function (ctx, camX, camY) {
 TGH.Boss = function (x, y) {
     this.x = x;
     this.y = y;
-    this.w = 120;
-    this.h = 120;
-    this.speed = 90;
+    this.w = 96;
+    this.h = 96;
+    this.speed = 70;
     this.alive = true;
     this.animTimer = 0;
     this.offsetY = 0;
