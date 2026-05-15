@@ -24,6 +24,10 @@ TGH.Player = function (x, y) {
     this.accel = 1200;
     this.drag = 0.82;
     this.windForce = 0;
+    this.isAttacking = false;
+    this.attackTimer = 0;
+    this.dashSpeed = 450;
+    this.jumpForce = 450;
 };
 
 TGH.Player.prototype.update = function (dt, tileMap) {
@@ -35,28 +39,48 @@ TGH.Player.prototype.update = function (dt, tileMap) {
     var input = TGH.Input;
     var moving = false;
 
-    // Horizontal movement with inertia
-    if (input.isDown('ArrowLeft')) {
-        this.vx -= this.accel * dt;
-        if (this.vx < -this.speed) this.vx = -this.speed;
-        this.facingRight = false;
-        moving = true;
-    }
-    if (input.isDown('ArrowRight')) {
-        this.vx += this.accel * dt;
-        if (this.vx > this.speed) this.vx = this.speed;
-        this.facingRight = true;
-        moving = true;
-    }
-
-    // Apply drag when not pressing keys
-    if (!moving) {
-        this.vx *= this.drag;
-        if (Math.abs(this.vx) < 5) this.vx = 0;
+    if (this.isAttacking) {
+        this.attackTimer -= dt;
+        this.vx = (this.facingRight ? 1 : -1) * this.dashSpeed;
+        if (this.attackTimer <= 0) {
+            this.isAttacking = false;
+        }
+        TGH.Particles.emit(this.x + this.w / 2, this.y + this.h / 2, 1, '#ffffff', 20);
+    } else {
+        if (input.wasPressed('z') || input.wasPressed('x') || input.wasPressed(' ')) {
+            this.isAttacking = true;
+            this.attackTimer = 0.25;
+            TGH.Particles.emit(this.x + this.w / 2, this.y + this.h / 2, 15, '#ffffff', 100);
+        } else {
+            // Horizontal movement with inertia
+            if (input.isDown('ArrowLeft')) {
+                this.vx -= this.accel * dt;
+                if (this.vx < -this.speed) this.vx = -this.speed;
+                this.facingRight = false;
+                moving = true;
+            }
+            if (input.isDown('ArrowRight')) {
+                this.vx += this.accel * dt;
+                if (this.vx > this.speed) this.vx = this.speed;
+                this.facingRight = true;
+                moving = true;
+            }
+            if (input.wasPressed('ArrowUp')) {
+                this.vy = -this.jumpForce;
+                this.grounded = false;
+                TGH.Particles.emit(this.x + this.w / 2, this.y + this.h, 10, '#ffffff', 50);
+            }
+        }
+        
+        // Apply drag when not pressing keys
+        if (!moving) {
+            this.vx *= this.drag;
+            if (Math.abs(this.vx) < 5) this.vx = 0;
+        }
     }
 
     // Apply wind
-    if (this.windForce !== 0) {
+    if (this.windForce !== 0 && !this.isAttacking) {
         this.vx += this.windForce * dt;
     }
 
@@ -79,16 +103,8 @@ TGH.Player.prototype.update = function (dt, tileMap) {
     }
 
     // Animation
-    if (moving && this.grounded) {
-        this.animTimer += dt;
-        if (this.animTimer > 0.15) {
-            this.animTimer = 0;
-            this.animFrame = this.animFrame === 1 ? 2 : 1;
-        }
-    } else {
-        this.animFrame = 0;
-        this.animTimer = 0;
-    }
+    this.animFrame = 0;
+    this.animTimer = 0;
 
     // Clamp to level bounds
     if (this.x < 0) { this.x = 0; this.vx = 0; }
@@ -109,26 +125,43 @@ TGH.Player.prototype.render = function (ctx, camX, camY) {
     var sprites = TGH.Assets.sprites;
     var sprite;
 
-    if (!this.alive) {
-        sprite = sprites.playerDead;
-        var alpha = this.deathTimer / 1.5;
-        ctx.globalAlpha = alpha;
-    } else {
-        if (this.animFrame === 0) sprite = sprites.playerIdle;
-        else if (this.animFrame === 1) sprite = sprites.playerWalk1;
-        else sprite = sprites.playerWalk2;
-    }
-
     var dx = Math.floor(this.x + this.drawOffsetX - camX);
     var dy = Math.floor(this.y + this.drawOffsetY - camY);
 
     ctx.save();
-    if (!this.facingRight) {
-        ctx.translate(dx + 32, dy);
-        ctx.scale(-1, 1);
-        ctx.drawImage(sprite, 0, 0);
+    if (this.isAttacking) {
+        ctx.globalAlpha = 0.7;
+        ctx.filter = 'brightness(200%)';
+    }
+
+    if (this.isCar) {
+        ctx.fillStyle = '#ff4040';
+        ctx.fillRect(dx + 6, dy + 10, 40, 15);
+        ctx.fillStyle = '#80d0ff';
+        ctx.fillRect(dx + 26, dy + 10, 10, 8);
+        ctx.fillStyle = '#303030';
+        ctx.fillRect(dx + 10, dy + 25, 8, 8);
+        ctx.fillRect(dx + 34, dy + 25, 8, 8);
+        
+        if (Math.random() < 0.3) {
+            TGH.Particles.emit(this.x, this.y + 15, 1, '#ffaa40', 20);
+        }
     } else {
-        ctx.drawImage(sprite, dx, dy);
+        if (!this.alive) {
+            sprite = sprites.playerDead;
+            var alpha = this.deathTimer / 1.5;
+            ctx.globalAlpha = alpha;
+        } else {
+            sprite = sprites.playerIdle;
+        }
+
+        if (!this.facingRight) {
+            ctx.translate(dx + 32, dy);
+            ctx.scale(-1, 1);
+            ctx.drawImage(sprite, 0, 0);
+        } else {
+            ctx.drawImage(sprite, dx, dy);
+        }
     }
     ctx.restore();
     ctx.globalAlpha = 1;
@@ -209,6 +242,96 @@ TGH.Patroller.prototype.render = function (ctx, camX, camY) {
     var dy = Math.floor(this.y - 2 - camY);
 
     ctx.save();
+    if (this.dir < 0) {
+        ctx.translate(dx + 32, dy);
+        ctx.scale(-1, 1);
+        ctx.drawImage(sprite, 0, 0);
+    } else {
+        ctx.drawImage(sprite, dx, dy);
+    }
+    ctx.restore();
+};
+
+// ── POLICE ENEMY ──
+TGH.Police = function (x, y, speed) {
+    this.x = x;
+    this.y = y;
+    this.w = 28;
+    this.h = 28;
+    this.speed = speed || 100;
+    this.animTimer = 0;
+    this.animFrame = 0;
+    this.alive = true;
+    this.vy = 0;
+    this.vx = 0;
+    this.dir = 1;
+};
+
+TGH.Police.prototype.update = function (dt, tileMap, player) {
+    if (!player || !player.alive) {
+        this.vx = 0;
+    } else {
+        // Chase player
+        if (player.x > this.x) {
+            this.dir = 1;
+            this.vx = this.speed;
+        } else {
+            this.dir = -1;
+            this.vx = -this.speed;
+        }
+    }
+
+    this.x += this.vx * dt;
+
+    // Horizontal wall collision
+    var T = TGH.TILE;
+    var checkCol, checkRow;
+    if (this.dir > 0) {
+        checkCol = Math.floor((this.x + this.w) / T);
+    } else {
+        checkCol = Math.floor(this.x / T);
+    }
+    checkRow = Math.floor((this.y + this.h / 2) / T);
+    if (TGH.Physics.isSolid(tileMap, checkCol, checkRow)) {
+        if (this.dir > 0) {
+            this.x = checkCol * T - this.w;
+        } else {
+            this.x = (checkCol + 1) * T;
+        }
+        // Jump if stuck
+        if (this.vy === 0) {
+            this.vy = -350;
+        }
+    }
+
+    // Gravity
+    this.vy += TGH.Physics.GRAVITY * dt;
+    if (this.vy > TGH.Physics.MAX_FALL) this.vy = TGH.Physics.MAX_FALL;
+
+    // Y collision
+    this.y += this.vy * dt;
+    var bottom = Math.floor((this.y + this.h) / T);
+    var col = Math.floor((this.x + this.w / 2) / T);
+    if (TGH.Physics.isSolid(tileMap, col, bottom)) {
+        this.y = bottom * T - this.h;
+        this.vy = 0;
+    }
+
+    // Animation
+    this.animTimer += dt;
+    if (this.animTimer > 0.15) {
+        this.animTimer = 0;
+        this.animFrame = this.animFrame === 0 ? 1 : 0;
+    }
+};
+
+TGH.Police.prototype.render = function (ctx, camX, camY) {
+    var sprite = this.animFrame === 0 ? TGH.Assets.sprites.patroller1 : TGH.Assets.sprites.patroller2;
+    var dx = Math.floor(this.x - 2 - camX);
+    var dy = Math.floor(this.y - 2 - camY);
+
+    ctx.save();
+    ctx.filter = 'hue-rotate(200deg) saturate(200%)'; // Make it blue-ish for police
     if (this.dir < 0) {
         ctx.translate(dx + 32, dy);
         ctx.scale(-1, 1);
@@ -417,13 +540,34 @@ TGH.Boss = function (x, y) {
     this.y = y;
     this.w = 96;
     this.h = 96;
-    this.speed = 70;
+    this.speed = 40;
     this.alive = true;
     this.animTimer = 0;
     this.offsetY = 0;
+    this.hp = 15;
+    this.shootTimer = 0;
+    this.colorOverlay = 0;
+    this.vy = 0;
+};
+
+TGH.Boss.prototype.takeDamage = function () {
+    this.hp--;
+    this.colorOverlay = 1.0;
+    TGH.Particles.emit(this.x + this.w / 2, this.y + this.h / 2, 30, '#ffffff', 200);
+    if (this.hp <= 0) {
+        this.alive = false;
+        TGH.Particles.emit(this.x + this.w / 2, this.y + this.h / 2, 100, '#ffaa40', 300);
+    }
 };
 
 TGH.Boss.prototype.update = function (dt, playerX) {
+    if (!this.alive) return false;
+
+    if (this.colorOverlay > 0) {
+        this.colorOverlay -= dt * 3;
+        if (this.colorOverlay < 0) this.colorOverlay = 0;
+    }
+
     // Chase player
     if (playerX > this.x + this.w / 2) {
         this.x += this.speed * dt;
@@ -431,17 +575,50 @@ TGH.Boss.prototype.update = function (dt, playerX) {
         this.x -= this.speed * dt;
     }
 
-    // Bobbing animation
-    this.animTimer += dt * 3;
-    this.offsetY = Math.sin(this.animTimer) * 4;
+    // Gravity for when the boss falls
+    if (!this.isFlying && this.speed === 0) {
+        this.vy += 980 * dt; // gravity
+        this.y += this.vy * dt;
+    }
 
-    // Gradually speed up
-    this.speed += dt * 2;
-    if (this.speed > 180) this.speed = 180;
+    // Bobbing animation
+    this.animTimer += dt * (this.isFlying ? 8 : 3);
+    this.offsetY = Math.sin(this.animTimer) * (this.isFlying ? 10 : 4);
+
+    if (!this.isFlying && this.speed > 0) {
+        // Gradually speed up, but cap at 100 so player can fight
+        this.speed += dt;
+        if (this.speed > 100) this.speed = 100;
+    }
+    
+    // Emit flying particles
+    if (this.isFlying) {
+        TGH.Particles.emit(this.x, this.y + this.h/2 + this.offsetY, 2, '#ff4040', 50);
+    }
+    
+    // Shoot projectiles
+    this.shootTimer += dt;
+    if (this.shootTimer > 2.5) {
+        this.shootTimer = 0;
+        return true; // Should shoot
+    }
+    return false;
 };
 
 TGH.Boss.prototype.render = function (ctx, camX, camY) {
+    if (!this.alive) return;
+    ctx.save();
+    if (this.colorOverlay > 0) {
+        ctx.globalAlpha = 0.5 + 0.5 * this.colorOverlay;
+        ctx.filter = 'sepia(100%) hue-rotate(300deg) saturate(500%) brightness(150%)'; // Red flash
+    }
     ctx.drawImage(TGH.Assets.sprites.boss,
         Math.floor(this.x - camX),
         Math.floor(this.y + this.offsetY - camY));
+    ctx.restore();
+    
+    // Health bar
+    ctx.fillStyle = 'red';
+    var hpWidth = (this.hp / 15) * this.w;
+    ctx.fillRect(Math.floor(this.x - camX), Math.floor(this.y - camY - 10), hpWidth, 6);
 };

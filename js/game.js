@@ -73,6 +73,8 @@ TGH.Game.prototype.loadLevel = function (index) {
             this.enemies.push(new TGH.Patroller(e.x * T, e.y * T - 28, e.range, e.speed));
         } else if (e.type === 'sentinel') {
             this.enemies.push(new TGH.Sentinel(e.x * T + 2, e.y * T - 28));
+        } else if (e.type === 'police') {
+            this.enemies.push(new TGH.Police(e.x * T, e.y * T - 28, e.speed));
         }
     }
 
@@ -103,6 +105,18 @@ TGH.Game.prototype.loadLevel = function (index) {
     if (this.levelData.boss) {
         var b = this.levelData.boss;
         this.boss = new TGH.Boss(b.x * T, b.y * T);
+        if (b.speed) this.boss.speed = b.speed;
+        if (b.hp) this.boss.hp = b.hp;
+        if (b.flying) this.boss.isFlying = true;
+    }
+
+    // Car level
+    if (this.levelData.isCarLevel) {
+        this.player.isCar = true;
+        this.player.speed = 500;
+        this.player.accel = 3000;
+        this.player.w = 40;
+        this.player.h = 20;
     }
 
     // Find buttons and link to doors
@@ -210,15 +224,42 @@ TGH.Game.prototype.updatePlaying = function (dt) {
     for (var i = 0; i < this.enemies.length; i++) {
         var en = this.enemies[i];
         if (en.update.length > 1) {
-            en.update(dt, this.tileMap);
+            en.update(dt, this.tileMap, this.player);
         } else {
             en.update(dt);
         }
         // Check collision with player
         if (this.player.alive && TGH.Physics.overlap(this.player, en)) {
-            this.player.die();
-            this.screenShake = 0.3;
+            var playerBottom = this.player.y + this.player.h;
+            var enemyCenterY = en.y + en.h / 2;
+            
+            if (this.player.vy > 0 && playerBottom < enemyCenterY + 12) {
+                // Stomp
+                en.alive = false;
+                TGH.Particles.emit(en.x + en.w / 2, en.y + en.h / 2, 20, '#ffaa40', 150);
+                this.enemies.splice(i, 1);
+                i--;
+                this.player.vy = -350; // Bounce
+            } else if (this.player.isAttacking) {
+                en.alive = false;
+                TGH.Particles.emit(en.x + en.w / 2, en.y + en.h / 2, 20, '#ffaa40', 150);
+                this.enemies.splice(i, 1);
+                i--;
+            } else {
+                this.player.die();
+                this.screenShake = 0.3;
+            }
         }
+    }
+
+    // Player shooting
+    if (TGH.Input.wasPressed('c') || TGH.Input.wasPressed('C')) {
+        var dir = this.player.facingRight ? 1 : -1;
+        var px = this.player.facingRight ? this.player.x + this.player.w : this.player.x - 12;
+        var py = this.player.y + this.player.h / 2 - 6;
+        var proj = new TGH.Projectile(px, py, dir);
+        proj.isPlayerProjectile = true;
+        this.projectiles.push(proj);
     }
 
     // Update shooters and projectiles
@@ -239,10 +280,34 @@ TGH.Game.prototype.updatePlaying = function (dt) {
             this.projectiles.splice(i, 1);
             continue;
         }
-        if (this.player.alive && TGH.Physics.overlap(this.player, proj)) {
-            this.player.die();
-            this.screenShake = 0.3;
-            this.projectiles.splice(i, 1);
+        
+        if (proj.isPlayerProjectile) {
+            // Hit enemies
+            for (var j = 0; j < this.enemies.length; j++) {
+                if (this.enemies[j].alive && TGH.Physics.overlap(this.enemies[j], proj)) {
+                    this.enemies[j].alive = false;
+                    proj.alive = false;
+                    TGH.Particles.emit(this.enemies[j].x + this.enemies[j].w / 2, this.enemies[j].y + this.enemies[j].h / 2, 20, '#ffaa40', 150);
+                }
+            }
+            // Hit boss
+            if (this.boss && this.boss.alive && TGH.Physics.overlap(this.boss, proj)) {
+                this.boss.takeDamage();
+                proj.alive = false;
+            }
+            if (!proj.alive) this.projectiles.splice(i, 1);
+        } else {
+            // Enemy projectile hits player
+            if (this.player.alive && TGH.Physics.overlap(this.player, proj)) {
+                if (this.player.isAttacking) {
+                    this.projectiles.splice(i, 1);
+                    TGH.Particles.emit(proj.x, proj.y, 10, '#ffffff', 100);
+                } else {
+                    this.player.die();
+                    this.screenShake = 0.3;
+                    this.projectiles.splice(i, 1);
+                }
+            }
         }
     }
 
@@ -252,11 +317,39 @@ TGH.Game.prototype.updatePlaying = function (dt) {
     }
 
     // Update boss
-    if (this.boss) {
-        this.boss.update(dt, this.player.x);
+    if (this.boss && this.boss.alive) {
+        var shouldShoot = this.boss.update(dt, this.player.x);
+        
+        if (shouldShoot) {
+            var px = this.boss.x < this.player.x ? this.boss.x + this.boss.w : this.boss.x - 12;
+            var dir = this.boss.x < this.player.x ? 1 : -1;
+            var py = this.boss.y + this.boss.h / 2 - 6;
+            this.projectiles.push(new TGH.Projectile(px, py, dir));
+            this.projectiles.push(new TGH.Projectile(px, py - 20, dir)); // shoot 2 at once
+        }
+        
+        // Check if boss falls into lava (Y out of bounds)
+        if (this.boss.y > this.tileMap.length * TGH.TILE) {
+            this.boss.alive = false;
+        }
+        
         if (this.player.alive && TGH.Physics.overlap(this.player, this.boss)) {
-            this.player.die();
-            this.screenShake = 0.5;
+            var playerBottom = this.player.y + this.player.h;
+            var bossCenterY = this.boss.y + this.boss.h / 2;
+            
+            if (this.player.vy > 0 && playerBottom < bossCenterY + 20) {
+                this.player.vy = -400; // Bounce
+                TGH.Particles.emit(this.boss.x + this.boss.w/2, this.boss.y + this.boss.h/2, 30, '#ff4040', 200);
+                this.screenShake = 0.2;
+            } else if (this.player.isAttacking) {
+                this.player.vx = (this.player.x < this.boss.x ? -1 : 1) * 300;
+                this.player.isAttacking = false;
+                TGH.Particles.emit(this.boss.x + this.boss.w/2, this.boss.y + this.boss.h/2, 30, '#ff4040', 200);
+                this.screenShake = 0.2;
+            } else {
+                this.player.die();
+                this.screenShake = 0.5;
+            }
         }
     }
 
@@ -271,6 +364,13 @@ TGH.Game.prototype.updatePlaying = function (dt) {
             btn.pressed = true;
             if (btn.door) {
                 this.tileMap[btn.door.row][btn.door.col] = 0;
+            }
+            if (this.levelData.isCarLevel && this.boss) {
+                // Trap the flying boss!
+                this.boss.isFlying = false;
+                this.boss.speed = 0; // stop moving horizontally
+                TGH.Particles.emit(this.boss.x + this.boss.w/2, this.boss.y + this.boss.h/2, 50, '#ff4040', 300);
+                this.screenShake = 1.0;
             }
             TGH.Particles.emit(bx + T / 2, by + T / 2, 8, '#30ff30', 100);
         }
@@ -376,7 +476,7 @@ TGH.Game.prototype.renderMenu = function (ctx, W, H) {
     // Subtitle
     ctx.fillStyle = '#8080a0';
     ctx.font = '10px "Press Start 2P", monospace';
-    ctx.fillText('Um herói que não consegue pular...', W / 2, H / 2 - 20);
+    ctx.fillText('Um herói que agora consegue pular!', W / 2, H / 2 - 20);
     ctx.fillText('mas nunca desiste!', W / 2, H / 2);
 
     // Prompt
@@ -390,8 +490,9 @@ TGH.Game.prototype.renderMenu = function (ctx, W, H) {
     // Controls info
     ctx.fillStyle = '#8080a0';
     ctx.font = '8px "Press Start 2P", monospace';
-    ctx.fillText('SETAS ESQUERDA/DIREITA PARA MOVER', W / 2, H - 60);
-    ctx.fillText('7 FASES DE PURA ESTRATÉGIA', W / 2, H - 40);
+    ctx.fillText('SETAS PARA MOVER E PULAR (CIMA)', W / 2, H - 70);
+    ctx.fillText('Z / X / ESPAÇO: DASH | C: ATIRAR', W / 2, H - 50);
+    ctx.fillText('10 FASES DE PURA ESTRATÉGIA', W / 2, H - 30);
 };
 
 TGH.Game.prototype.renderLevel = function (ctx, W, H) {
@@ -578,7 +679,7 @@ TGH.Game.prototype.renderVictory = function (ctx, W, H) {
     ctx.fillStyle = '#a0a0c0';
     ctx.font = '10px "Press Start 2P", monospace';
     ctx.fillText('O Herói Aterrado completou', W / 2, H / 2 + 30);
-    ctx.fillText('todas as 7 fases!', W / 2, H / 2 + 50);
+    ctx.fillText('todas as 10 fases!', W / 2, H / 2 + 50);
 
     var blink = Math.sin(this.animTime * 6) > 0;
     if (blink) {

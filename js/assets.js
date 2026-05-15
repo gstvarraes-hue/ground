@@ -88,69 +88,120 @@ TGH.Assets = {
 
     // ── PLAYER ──
     generatePlayerSprites: function () {
-        var P = TGH.PALETTE;
         var self = this;
 
-        function drawPlayerBase(ctx, frame) {
-            var r = self._rect.bind(self, ctx);
-            // Head outline
-            r(10, 0, 12, 2, P.outline);
-            r(8, 2, 2, 10, P.outline);
-            r(22, 2, 2, 10, P.outline);
-            r(10, 12, 12, 2, P.outline);
-            // Hair
-            r(10, 2, 12, 4, P.hair);
-            // Face
-            r(10, 6, 12, 6, P.skin);
-            // Eyes
-            r(12, 8, 2, 2, P.outline);
-            r(18, 8, 2, 2, P.outline);
-            r(13, 8, 1, 1, P.eyeWhite);
-            r(19, 8, 1, 1, P.eyeWhite);
-            // Body
-            r(8, 14, 16, 2, P.outline);
-            r(6, 16, 2, 8, P.outline);
-            r(24, 16, 2, 8, P.outline);
-            r(8, 16, 16, 8, P.shirt);
-            r(8, 16, 16, 2, P.shirtDark);
-            // Belt
-            r(8, 23, 16, 2, P.outline);
-            // Legs
-            if (frame === 0) {
-                // Idle
-                r(10, 25, 4, 5, P.pants);
-                r(18, 25, 4, 5, P.pants);
-                r(10, 30, 6, 2, P.shoes);
-                r(16, 30, 6, 2, P.shoes);
-            } else if (frame === 1) {
-                // Walk 1
-                r(8, 25, 4, 5, P.pants);
-                r(20, 25, 4, 4, P.pants);
-                r(6, 30, 6, 2, P.shoes);
-                r(20, 29, 6, 2, P.shoes);
-            } else {
-                // Walk 2
-                r(20, 25, 4, 5, P.pants);
-                r(8, 25, 4, 4, P.pants);
-                r(20, 30, 6, 2, P.shoes);
-                r(8, 29, 6, 2, P.shoes);
+        var colors = {
+            'R': '#e52521', // Red
+            'B': '#004fe8', // Blue
+            'S': '#ffcca5', // Skin
+            'H': '#6e3c19', // Brown
+            'Y': '#fced23', // Yellow
+            'K': '#000000'  // Black
+        };
+
+        var marioIdle = [
+            "     RRRRR      ",
+            "    RRRRRRRRR   ",
+            "    HHHSKSS     ",
+            "   HHSKSSSKSSS  ",
+            "   HHSKSSSSSS   ",
+            "   HHHHKKSSS    ",
+            "     SSSSSSS    ",
+            "    RRBBRRR     ",
+            "   RRRBBRBBRRR  ",
+            "  RRRRBBBBRRRR  ",
+            "  SS RBYYBR SS  ",
+            "  SSSBBBBBBSSS  ",
+            "  SS BBBBBB SS  ",
+            "     BBB BBB    ",
+            "    HHH   HHH   ",
+            "   HHHH   HHHH  "
+        ];
+
+        var marioWalk1 = [
+            "     RRRRR      ",
+            "    RRRRRRRRR   ",
+            "    HHHSKSS     ",
+            "   HHSKSSSKSSS  ",
+            "   HHSKSSSSSS   ",
+            "   HHHHKKSSS    ",
+            "     SSSSSSS    ",
+            "    RRBBRR      ",
+            "   RRRBBRBBRR   ",
+            "  RRRRBBBBRRRS  ",
+            "  SS RBYYBR SSS ",
+            "  SSSBBBBBB  SS ",
+            "  SS BBBBBB     ",
+            "     BB  BBBB   ",
+            "    HHH    HHH  ",
+            "   HHHH    HHHH "
+        ];
+
+        var marioWalk2 = [
+            "     RRRRR      ",
+            "    RRRRRRRRR   ",
+            "    HHHSKSS     ",
+            "   HHSKSSSKSSS  ",
+            "   HHSKSSSSSS   ",
+            "   HHHHKKSSS    ",
+            "     SSSSSSS    ",
+            "      RRBBRRR   ",
+            "    RRRRBBRBBRRR",
+            "   S RBBBBRRRR  ",
+            "  SSS BBYYB SS  ",
+            "   SS BBBBB SSS ",
+            "      BBBBBB SS ",
+            "    BBBB  BB    ",
+            "   HHH     HHH  ",
+            "  HHHH     HHHH "
+        ];
+
+        var marioJump = [
+            "     RRRRR      ",
+            "    RRRRRRRRR   ",
+            "    HHHSKSS     ",
+            "   HHSKSSSKSSS  ",
+            "   HHSKSSSSSS S ",
+            "   HHHHKKSSS SS ",
+            "     SSSSSSS  S ",
+            "    RRBBRRR   R ",
+            "   RRRBBRBBRRRR ",
+            "  RRRRBBBBRRRR  ",
+            "  SS RBYYBR     ",
+            "  SSSBBBBBB     ",
+            "  SS BBBBBB     ",
+            "     BBB  BBB   ",
+            "    HHH     HHH ",
+            "   HHHH     HHHH"
+        ];
+
+        function drawPixelArt(ctx, art) {
+            for (var y = 0; y < art.length; y++) {
+                for (var x = 0; x < art[y].length; x++) {
+                    var c = art[y][x];
+                    if (colors[c]) {
+                        ctx.fillStyle = colors[c];
+                        ctx.fillRect(x * 2, y * 2, 2, 2);
+                    }
+                }
             }
         }
 
-        // Generate 3 frames: idle, walk1, walk2
         this.sprites.playerIdle = this._createCanvas(32, 32);
-        drawPlayerBase(this.sprites.playerIdle.getContext('2d'), 0);
+        drawPixelArt(this.sprites.playerIdle.getContext('2d'), marioIdle);
 
         this.sprites.playerWalk1 = this._createCanvas(32, 32);
-        drawPlayerBase(this.sprites.playerWalk1.getContext('2d'), 1);
+        drawPixelArt(this.sprites.playerWalk1.getContext('2d'), marioWalk1);
 
         this.sprites.playerWalk2 = this._createCanvas(32, 32);
-        drawPlayerBase(this.sprites.playerWalk2.getContext('2d'), 2);
+        drawPixelArt(this.sprites.playerWalk2.getContext('2d'), marioWalk2);
 
-        // Death sprite (red tint)
+        this.sprites.playerJump = this._createCanvas(32, 32);
+        drawPixelArt(this.sprites.playerJump.getContext('2d'), marioJump);
+
         this.sprites.playerDead = this._createCanvas(32, 32);
         var dctx = this.sprites.playerDead.getContext('2d');
-        drawPlayerBase(dctx, 0);
+        drawPixelArt(dctx, marioIdle);
         dctx.globalCompositeOperation = 'source-atop';
         dctx.fillStyle = 'rgba(255,0,0,0.5)';
         dctx.fillRect(0, 0, 32, 32);
