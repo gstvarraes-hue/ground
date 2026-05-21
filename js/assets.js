@@ -358,40 +358,54 @@ TGH.Assets = {
         r(10, 10, 4, 4, P.outline);
         r(2, 26, 18, 4, P.shooterDark);
 
-        // Boss
+        // Boss (Super Mario Bros 1 - NES)
+        var bowser = [
+            "        WW          WW          ",
+            "       WWWW        WWWW         ",
+            "      WWWWWW      WWWWWW        ",
+            "       WWWW        WWWW         ",
+            "         GGGGGGGGGGGG           ",
+            "       GGGGGGGGGGGGGGGG         ",
+            "       GGGGGGGGGGGGGGGGRRRRRR   ",
+            "       GGGGGGGGGGGGGGGGRRRRRRRR ",
+            "       GGWWGGWWGGGGGGGGRRRRRRRRR",
+            "       GGKWWGKWGGGGGGGGRRRRRRRRR",
+            "       GGWWGGWWGGGGGGGGRRRRRRRR ",
+            "       OOOOOOOOOOOOOOOOORRRRRRR ",
+            "       OOOOOOOOOOOOOOOOORRRRR   ",
+            "       OOOORRRRRRRRRROOG        ",
+            "       OOOOOWWWWWWWWOOGG        ",
+            "       OOOOOWWWWWWWWOOGGG       ",
+            "       OOOORRRRRRRRRROOGGGG     ",
+            "       OOOOOOOOOOOOOOGGGGGGG    ",
+            "       GGGGGGGGGGGGGGGGGGGGGG   ",
+            "       GGGGWWGGGGWWGGGGWWGGGG   ",
+            "      GGGGWWWWGGWWWWGGWWWWGGGG  ",
+            "      GGGGWWWWGGWWWWGGWWWWGGGG  ",
+            "      GGGGGGGGGGGGGGGGGGGGGGGG  ",
+            "       GGGGGGGGGGGGGGGGGGGGGG   ",
+            "       GGGGGGGGGGGGGGGGGGGGGG   ",
+            "       OOOOOO          OOOOOO   ",
+            "      OOOOOOOO        OOOOOOOO  ",
+            "      OOO  OOO        OOO  OOO  ",
+            "     OOOO  OOOO      OOOO  OOOO ",
+            "     WWWW  WWWW      WWWW  WWWW ",
+            "    WWWWWWWWWWWW    WWWWWWWWWWWW",
+            "    WWWWWWWWWWWW    WWWWWWWWWWWW"
+        ];
+        
         this.sprites.boss = this._createCanvas(128, 128);
         ctx = this.sprites.boss.getContext('2d');
-        r = this._rect.bind(this, ctx);
-        // Body
-        r(16, 20, 96, 90, P.bossDark);
-        r(24, 16, 80, 90, P.bossRed);
-        r(32, 8, 64, 16, P.bossRed);
-        // Eyes
-        r(36, 32, 20, 16, P.eyeWhite);
-        r(72, 32, 20, 16, P.eyeWhite);
-        r(42, 36, 10, 10, P.outline);
-        r(78, 36, 10, 10, P.outline);
-        r(44, 38, 4, 4, P.bossRed);
-        r(80, 38, 4, 4, P.bossRed);
-        // Mouth
-        r(40, 60, 48, 8, P.outline);
-        r(44, 64, 8, 4, P.eyeWhite);
-        r(56, 64, 8, 4, P.eyeWhite);
-        r(68, 64, 8, 4, P.eyeWhite);
-        r(80, 64, 8, 4, P.eyeWhite);
-        // Horns
-        r(24, 4, 12, 16, P.bossDark);
-        r(92, 4, 12, 16, P.bossDark);
-        r(28, 0, 8, 8, P.bossLight);
-        r(92, 0, 8, 8, P.bossLight);
-        // Legs
-        r(24, 108, 16, 20, P.bossDark);
-        r(88, 108, 16, 20, P.bossDark);
-        // Arms
-        r(4, 40, 16, 12, P.bossRed);
-        r(108, 40, 16, 12, P.bossRed);
-        r(0, 44, 8, 16, P.bossDark);
-        r(120, 44, 8, 16, P.bossDark);
+        
+        for (var y = 0; y < bowser.length; y++) {
+            for (var x = 0; x < bowser[y].length; x++) {
+                var c = bowser[y][x];
+                if (colors[c]) {
+                    ctx.fillStyle = colors[c];
+                    ctx.fillRect(x * 4, y * 4, 4, 4);
+                }
+            }
+        }
 
         // Projectile
         this.sprites.projectile = this._createCanvas(16, 16);
