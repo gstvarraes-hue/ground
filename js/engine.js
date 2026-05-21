@@ -197,13 +197,18 @@ TGH.Physics = {
         return null;
     },
 
-    // Check exit
+    // Check exit (Flagpole)
     checkExit: function (entity, tileMap) {
         var T = TGH.TILE;
         var col = Math.floor((entity.x + entity.w / 2) / T);
-        var row = Math.floor((entity.y + entity.h / 2) / T);
-        var t = this.getTile(tileMap, col, row);
-        return t === 8; // exit tile
+        var bottomRow = Math.floor((entity.y + entity.h) / T);
+        
+        // The flagpole can be up to 6 tiles tall. We check if there's an exit tile (8) directly below us within 6 tiles.
+        for (var r = bottomRow; r <= bottomRow + 6; r++) {
+            var t = this.getTile(tileMap, col, r);
+            if (t === 8) return true;
+        }
+        return false;
     }
 };
 
