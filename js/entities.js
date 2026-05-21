@@ -326,12 +326,11 @@ TGH.Police.prototype.update = function (dt, tileMap, player) {
 };
 
 TGH.Police.prototype.render = function (ctx, camX, camY) {
-    var sprite = this.animFrame === 0 ? TGH.Assets.sprites.patroller1 : TGH.Assets.sprites.patroller2;
+    var sprite = this.animFrame === 0 ? TGH.Assets.sprites.koopa1 : TGH.Assets.sprites.koopa2;
     var dx = Math.floor(this.x - 2 - camX);
     var dy = Math.floor(this.y - 2 - camY);
 
     ctx.save();
-    ctx.filter = 'hue-rotate(200deg) saturate(200%)'; // Make it blue-ish for police
     if (this.dir < 0) {
         ctx.translate(dx + 32, dy);
         ctx.scale(-1, 1);
@@ -545,9 +544,12 @@ TGH.Boss = function (x, y) {
     this.animTimer = 0;
     this.offsetY = 0;
     this.hp = 15;
+    this.maxHp = 15;
     this.shootTimer = 0;
+    this.shootInterval = 2.5;
     this.colorOverlay = 0;
     this.vy = 0;
+    this.maxSpeed = 100;
 };
 
 TGH.Boss.prototype.takeDamage = function () {
@@ -586,9 +588,10 @@ TGH.Boss.prototype.update = function (dt, playerX) {
     this.offsetY = Math.sin(this.animTimer) * (this.isFlying ? 10 : 4);
 
     if (!this.isFlying && this.speed > 0) {
-        // Gradually speed up, but cap at 100 so player can fight
+        // Gradually speed up
         this.speed += dt;
-        if (this.speed > 100) this.speed = 100;
+        var maxS = this.maxSpeed || 100;
+        if (this.speed > maxS) this.speed = maxS;
     }
     
     // Emit flying particles
@@ -598,7 +601,7 @@ TGH.Boss.prototype.update = function (dt, playerX) {
     
     // Shoot projectiles
     this.shootTimer += dt;
-    if (this.shootTimer > 2.5) {
+    if (this.shootTimer > this.shootInterval) {
         this.shootTimer = 0;
         return true; // Should shoot
     }
@@ -619,6 +622,112 @@ TGH.Boss.prototype.render = function (ctx, camX, camY) {
     
     // Health bar
     ctx.fillStyle = 'red';
-    var hpWidth = (this.hp / 15) * this.w;
+    var hpWidth = (this.hp / this.maxHp) * this.w;
     ctx.fillRect(Math.floor(this.x - camX), Math.floor(this.y - camY - 10), hpWidth, 6);
+};
+
+// ── MUSCLE GUARD ──
+TGH.MuscleGuard = function (x, y) {
+    this.x = x;
+    this.y = y;
+    this.w = 40;
+    this.h = 40;
+    this.speed = 30;
+    this.animTimer = 0;
+    this.animFrame = 0;
+    this.alive = true;
+    this.vy = 0;
+    this.vx = 0;
+    this.dir = -1;
+};
+
+TGH.MuscleGuard.prototype.update = function (dt, tileMap) {
+    this.x += this.speed * this.dir * dt;
+
+    var T = TGH.TILE;
+    var checkCol, checkRow;
+    if (this.dir > 0) {
+        checkCol = Math.floor((this.x + this.w) / T);
+    } else {
+        checkCol = Math.floor(this.x / T);
+    }
+    checkRow = Math.floor((this.y + this.h / 2) / T);
+    if (TGH.Physics.isSolid(tileMap, checkCol, checkRow)) {
+        this.dir *= -1;
+        if (this.dir > 0) {
+            this.x = (checkCol + 1) * T;
+        } else {
+            this.x = checkCol * T - this.w;
+        }
+    }
+
+    this.vy += TGH.Physics.GRAVITY * dt;
+    if (this.vy > TGH.Physics.MAX_FALL) this.vy = TGH.Physics.MAX_FALL;
+
+    this.y += this.vy * dt;
+    var bottom = Math.floor((this.y + this.h) / T);
+    var col = Math.floor((this.x + this.w / 2) / T);
+    if (TGH.Physics.isSolid(tileMap, col, bottom)) {
+        this.y = bottom * T - this.h;
+        this.vy = 0;
+    }
+
+    this.animTimer += dt;
+    if (this.animTimer > 0.4) {
+        this.animTimer = 0;
+        this.animFrame = this.animFrame === 0 ? 1 : 0;
+    }
+};
+
+TGH.MuscleGuard.prototype.render = function (ctx, camX, camY) {
+    var sprite = this.animFrame === 0 ? TGH.Assets.sprites.koopa1 : TGH.Assets.sprites.koopa2;
+    var dx = Math.floor(this.x - 2 - camX);
+    var dy = Math.floor(this.y - 2 - camY);
+
+    ctx.save();
+    ctx.filter = 'hue-rotate(320deg) saturate(150%)'; // Make it slightly reddish/dark for muscle Koopa
+    if (this.dir < 0) {
+        ctx.translate(dx + 44, dy);
+        ctx.scale(-1, 1);
+        ctx.drawImage(sprite, 0, 0, 32, 32, 0, 0, 44, 44);
+    } else {
+        ctx.drawImage(sprite, 0, 0, 32, 32, dx, dy, 44, 44);
+    }
+    ctx.restore();
+};
+
+// ── LASER TRAP ──
+TGH.Laser = function (x, y, h) {
+    this.x = x;
+    this.y = y;
+    this.w = 6;
+    this.h = h;
+    this.timer = 0;
+    this.on = true;
+    this.interval = 1.5;
+    this.alive = true; // For overlap checks
+};
+
+TGH.Laser.prototype.update = function(dt) {
+    this.timer += dt;
+    if (this.timer > this.interval) {
+        this.timer = 0;
+        this.on = !this.on;
+    }
+};
+
+TGH.Laser.prototype.render = function(ctx, camX, camY) {
+    if (this.on) {
+        ctx.save();
+        ctx.fillStyle = '#ff0000';
+        ctx.globalAlpha = 0.7 + Math.random() * 0.3; // flicker effect
+        ctx.fillRect(Math.floor(this.x - camX), Math.floor(this.y - camY), this.w, this.h);
+        
+        // Inner white beam
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.9;
+        ctx.fillRect(Math.floor(this.x - camX + 2), Math.floor(this.y - camY), this.w - 4, this.h);
+        
+        ctx.restore();
+    }
 };

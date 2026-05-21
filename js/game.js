@@ -20,6 +20,7 @@ TGH.Game = function () {
     this.shooters = [];
     this.projectiles = [];
     this.windZones = [];
+    this.lasers = [];
     this.boss = null;
     this.buttons = [];
     this.doorLinks = {};
@@ -56,6 +57,7 @@ TGH.Game.prototype.loadLevel = function (index) {
     this.platforms = [];
     this.shooters = [];
     this.windZones = [];
+    this.lasers = [];
     this.boss = null;
     this.buttons = [];
     this.doorLinks = {};
@@ -75,6 +77,8 @@ TGH.Game.prototype.loadLevel = function (index) {
             this.enemies.push(new TGH.Sentinel(e.x * T + 2, e.y * T - 28));
         } else if (e.type === 'police') {
             this.enemies.push(new TGH.Police(e.x * T, e.y * T - 28, e.speed));
+        } else if (e.type === 'muscle') {
+            this.enemies.push(new TGH.MuscleGuard(e.x * T, e.y * T - 40));
         }
     }
 
@@ -101,12 +105,24 @@ TGH.Game.prototype.loadLevel = function (index) {
         this.windZones.push(new TGH.WindZone(w.x * T, w.y * T, w.w * T, w.h * T, w.force));
     }
 
+    // Lasers
+    var lz = this.levelData.lasers || [];
+    for (var i = 0; i < lz.length; i++) {
+        var l = lz[i];
+        this.lasers.push(new TGH.Laser(l.x * T, l.y * T, l.h));
+    }
+
     // Boss
     if (this.levelData.boss) {
         var b = this.levelData.boss;
         this.boss = new TGH.Boss(b.x * T, b.y * T);
         if (b.speed) this.boss.speed = b.speed;
-        if (b.hp) this.boss.hp = b.hp;
+        if (b.maxSpeed) this.boss.maxSpeed = b.maxSpeed;
+        if (b.hp) {
+            this.boss.hp = b.hp;
+            this.boss.maxHp = b.hp;
+        }
+        if (b.shootInterval) this.boss.shootInterval = b.shootInterval;
         if (b.flying) this.boss.isFlying = true;
     }
 
@@ -316,6 +332,16 @@ TGH.Game.prototype.updatePlaying = function (dt) {
         this.windZones[i].update(dt);
     }
 
+    // Update lasers
+    for (var i = 0; i < this.lasers.length; i++) {
+        var l = this.lasers[i];
+        l.update(dt);
+        if (l.on && this.player.alive && TGH.Physics.overlap(this.player, l)) {
+            this.player.die();
+            this.screenShake = 0.3;
+        }
+    }
+
     // Update boss
     if (this.boss && this.boss.alive) {
         var shouldShoot = this.boss.update(dt, this.player.x);
@@ -326,6 +352,12 @@ TGH.Game.prototype.updatePlaying = function (dt) {
             var py = this.boss.y + this.boss.h / 2 - 6;
             this.projectiles.push(new TGH.Projectile(px, py, dir));
             this.projectiles.push(new TGH.Projectile(px, py - 20, dir)); // shoot 2 at once
+            if (this.boss.shootInterval < 2.0) {
+                this.projectiles.push(new TGH.Projectile(px, py + 20, dir));
+            }
+            if (this.boss.shootInterval < 1.0) {
+                this.projectiles.push(new TGH.Projectile(px, py - 40, dir));
+            }
         }
         
         // Check if boss falls into lava (Y out of bounds)
@@ -469,15 +501,15 @@ TGH.Game.prototype.renderMenu = function (ctx, W, H) {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#f8d830';
     ctx.font = '28px "Press Start 2P", monospace';
-    ctx.fillText('THE GROUNDED', W / 2, H / 2 - 100);
+    ctx.fillText('SUPER MARIO', W / 2, H / 2 - 100);
     ctx.fillStyle = '#f08030';
-    ctx.fillText('HERO', W / 2, H / 2 - 60);
+    ctx.fillText('BROS 4', W / 2, H / 2 - 60);
 
     // Subtitle
     ctx.fillStyle = '#8080a0';
     ctx.font = '10px "Press Start 2P", monospace';
-    ctx.fillText('Um herói que agora consegue pular!', W / 2, H / 2 - 20);
-    ctx.fillText('mas nunca desiste!', W / 2, H / 2);
+    ctx.fillText('O encanador mais famoso do mundo!', W / 2, H / 2 - 20);
+    ctx.fillText('agora com mais desafios!', W / 2, H / 2);
 
     // Prompt
     var blink = Math.sin(this.animTime * 6) > 0;
@@ -570,6 +602,11 @@ TGH.Game.prototype.renderLevel = function (ctx, W, H) {
     // Shooters
     for (var i = 0; i < this.shooters.length; i++) {
         this.shooters[i].render(ctx, camX, camY);
+    }
+
+    // Lasers
+    for (var i = 0; i < this.lasers.length; i++) {
+        this.lasers[i].render(ctx, camX, camY);
     }
 
     // Projectiles
@@ -678,8 +715,8 @@ TGH.Game.prototype.renderVictory = function (ctx, W, H) {
 
     ctx.fillStyle = '#a0a0c0';
     ctx.font = '10px "Press Start 2P", monospace';
-    ctx.fillText('O Herói Aterrado completou', W / 2, H / 2 + 30);
-    ctx.fillText('todas as 10 fases!', W / 2, H / 2 + 50);
+    ctx.fillText('O Mario completou', W / 2, H / 2 + 30);
+    ctx.fillText('todas as fases!', W / 2, H / 2 + 50);
 
     var blink = Math.sin(this.animTime * 6) > 0;
     if (blink) {

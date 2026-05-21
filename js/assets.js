@@ -96,7 +96,11 @@ TGH.Assets = {
             'S': '#ffcca5', // Skin
             'H': '#6e3c19', // Brown
             'Y': '#fced23', // Yellow
-            'K': '#000000'  // Black
+            'K': '#000000', // Black
+            'W': '#ffffff', // White
+            'G': '#43b047', // Green
+            'O': '#f8981d', // Orange
+            'L': '#ffe3ad'  // Light skin
         };
 
         var marioIdle = [
@@ -212,38 +216,110 @@ TGH.Assets = {
         var P = TGH.PALETTE;
         var r;
 
-        // Patroller (slime)
+        var goomba1 = [
+            "      HHHH      ",
+            "     HHHHHH     ",
+            "    HHHHHHHH    ",
+            "   HH HHHH HH   ",
+            "   HH HHHH HH   ",
+            "  HHHH K  K HHH ",
+            "  HHHHKKKKKKHHH ",
+            "  HHH KKKKKK HH ",
+            "  HHHHHKKKKHHHH ",
+            "   SSSSHHHHSSSS ",
+            "    SSS HH SSS  ",
+            "     S  HH  S   ",
+            "   KKK      KKK ",
+            "  KKKKK    KKKKK",
+            "  KKKKK    KKKKK",
+            "   KKK      KKK "
+        ];
+
+        var goomba2 = [
+            "      HHHH      ",
+            "     HHHHHH     ",
+            "    HHHHHHHH    ",
+            "   HH HHHH HH   ",
+            "   HH HHHH HH   ",
+            "  HHHH K  K HHH ",
+            "  HHHHKKKKKKHHH ",
+            "  HHH KKKKKK HH ",
+            "  HHHHHKKKKHHHH ",
+            "   SSSSHHHHSSSS ",
+            "    SSS HH SSS  ",
+            "     S  HH  S   ",
+            "  KKKKK    KKKKK",
+            " KKKKKKK  KKKKKK",
+            " KKKKKKK  KKKKKK",
+            "  KKKKK    KKKKK"
+        ];
+        
+        var koopa1 = [
+            "       GGGG     ",
+            "      GGGGGG    ",
+            "     GGGGGGGG   ",
+            "    WWG WW GGG  ",
+            "    KWG KW GGG  ",
+            "    WWG WW GGG  ",
+            "     GGGGGGGG   ",
+            "   YY GGGGGG    ",
+            "  YYYY GGGG YY  ",
+            " YYYYY GGGG YYY ",
+            " YYYYY GGG  YYY ",
+            " YYYY  GG   YYY ",
+            "  YY   GG   YY  ",
+            "      O  O      ",
+            "     OO  OO     ",
+            "    OOO  OOO    "
+        ];
+        
+        var koopa2 = [
+            "       GGGG     ",
+            "      GGGGGG    ",
+            "     GGGGGGGG   ",
+            "    WWG WW GGG  ",
+            "    KWG KW GGG  ",
+            "    WWG WW GGG  ",
+            "     GGGGGGGG   ",
+            "   YY GGGGGG    ",
+            "  YYYY GGGG YY  ",
+            " YYYYY GGGG YYY ",
+            " YYYYY GGG  YYY ",
+            " YYYY  GG   YYY ",
+            "  YY   GG   YY  ",
+            "    O      O    ",
+            "   OO     OO    ",
+            "  OOO    OOO    "
+        ];
+
+        var colors = {
+            'R': '#e52521', 'B': '#004fe8', 'S': '#ffcca5', 'H': '#6e3c19',
+            'Y': '#fced23', 'K': '#000000', 'W': '#ffffff', 'G': '#43b047', 'O': '#f8981d'
+        };
+
+        function drawPixelArt(ctx, art) {
+            for (var y = 0; y < art.length; y++) {
+                for (var x = 0; x < art[y].length; x++) {
+                    var c = art[y][x];
+                    if (colors[c]) {
+                        ctx.fillStyle = colors[c];
+                        ctx.fillRect(x * 2, y * 2, 2, 2);
+                    }
+                }
+            }
+        }
+
         this.sprites.patroller1 = this._createCanvas(32, 32);
-        var ctx = this.sprites.patroller1.getContext('2d');
-        r = this._rect.bind(this, ctx);
-        r(4, 16, 24, 14, P.slimeDark);
-        r(6, 12, 20, 6, P.slimeGreen);
-        r(8, 10, 16, 4, P.slimeGreen);
-        r(10, 8, 12, 4, P.slimeGreen);
-        r(6, 18, 20, 10, P.slimeGreen);
-        r(8, 14, 4, 4, P.slimeLight);
-        r(10, 16, 4, 2, P.eyeWhite);
-        r(18, 16, 4, 2, P.eyeWhite);
-        r(11, 17, 2, 1, P.outline);
-        r(19, 17, 2, 1, P.outline);
-        r(2, 28, 28, 2, P.slimeDark);
-        r(4, 30, 24, 2, P.slimeDark);
+        drawPixelArt(this.sprites.patroller1.getContext('2d'), goomba1);
 
         this.sprites.patroller2 = this._createCanvas(32, 32);
-        ctx = this.sprites.patroller2.getContext('2d');
-        r = this._rect.bind(this, ctx);
-        r(4, 18, 24, 12, P.slimeDark);
-        r(6, 14, 20, 6, P.slimeGreen);
-        r(8, 12, 16, 4, P.slimeGreen);
-        r(10, 10, 12, 4, P.slimeGreen);
-        r(6, 20, 20, 8, P.slimeGreen);
-        r(8, 16, 4, 4, P.slimeLight);
-        r(10, 18, 4, 2, P.eyeWhite);
-        r(18, 18, 4, 2, P.eyeWhite);
-        r(11, 19, 2, 1, P.outline);
-        r(19, 19, 2, 1, P.outline);
-        r(2, 28, 28, 2, P.slimeDark);
-        r(4, 30, 24, 2, P.slimeDark);
+        drawPixelArt(this.sprites.patroller2.getContext('2d'), goomba2);
+        
+        this.sprites.koopa1 = this._createCanvas(32, 32);
+        drawPixelArt(this.sprites.koopa1.getContext('2d'), koopa1);
+        
+        this.sprites.koopa2 = this._createCanvas(32, 32);
+        drawPixelArt(this.sprites.koopa2.getContext('2d'), koopa2);
 
         // Sentinel (eye creature)
         this.sprites.sentinel = this._createCanvas(32, 32);
