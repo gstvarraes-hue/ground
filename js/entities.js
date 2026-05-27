@@ -731,3 +731,62 @@ TGH.Laser.prototype.render = function(ctx, camX, camY) {
         ctx.restore();
     }
 };
+
+// ── POLICE CAR ──
+TGH.PoliceCar = function (x, y, dir) {
+    this.x = x;
+    this.y = y;
+    this.w = 64;
+    this.h = 32;
+    this.speed = 180;
+    this.animTimer = 0;
+    this.alive = true;
+    this.vy = 0;
+    this.vx = 0;
+    this.dir = dir || -1;
+};
+
+TGH.PoliceCar.prototype.update = function (dt, tileMap) {
+    this.x += this.speed * this.dir * dt;
+
+    // Gravity
+    this.vy += TGH.Physics.GRAVITY * dt;
+    if (this.vy > TGH.Physics.MAX_FALL) this.vy = TGH.Physics.MAX_FALL;
+
+    // Y collision
+    this.y += this.vy * dt;
+    var T = TGH.TILE;
+    var bottom = Math.floor((this.y + this.h) / T);
+    var col = Math.floor((this.x + this.w / 2) / T);
+    if (TGH.Physics.isSolid(tileMap, col, bottom)) {
+        this.y = bottom * T - this.h;
+        this.vy = 0;
+    }
+
+    this.animTimer += dt;
+    if (this.animTimer > 0.1) {
+        this.animTimer = 0;
+        // spawn siren particles
+        if (Math.random() > 0.5) {
+            TGH.Particles.emit(this.x + (this.dir > 0 ? 10 : 40), this.y, 1, '#ff0000', 30);
+        } else {
+            TGH.Particles.emit(this.x + (this.dir > 0 ? 10 : 40), this.y, 1, '#0000ff', 30);
+        }
+    }
+};
+
+TGH.PoliceCar.prototype.render = function (ctx, camX, camY) {
+    var sprite = TGH.Assets.sprites.policeCar;
+    var dx = Math.floor(this.x - camX);
+    var dy = Math.floor(this.y - camY);
+
+    ctx.save();
+    if (this.dir < 0) {
+        ctx.drawImage(sprite, dx, dy);
+    } else {
+        ctx.translate(dx + this.w, dy);
+        ctx.scale(-1, 1);
+        ctx.drawImage(sprite, 0, 0);
+    }
+    ctx.restore();
+};

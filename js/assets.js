@@ -321,6 +321,28 @@ TGH.Assets = {
         this.sprites.koopa2 = this._createCanvas(32, 32);
         drawPixelArt(this.sprites.koopa2.getContext('2d'), koopa2);
 
+        var policeCarArt = [
+            "                                ",
+            "                                ",
+            "         BBBRRR                 ",
+            "       WWBBBRRRWW               ",
+            "     WWWWWWWWWWWWWW             ",
+            "   WWWWKKWWWWWWKKWWWW           ",
+            "  WWWWWKKWWWWWWKKWWWWW          ",
+            " WWWWWWWWWWWWWWWWWWWWWW         ",
+            "WWWWWWWWWBBBBBBWWWWWWWWW        ",
+            "WWWWWWWWWWWWWWWWWWWWWWWW        ",
+            "WWWWWWWWWWWWWWWWWWWWWWWW        ",
+            "  KKK              KKK          ",
+            " KKKKK            KKKKK         ",
+            " KKKKK            KKKKK         ",
+            "  KKK              KKK          ",
+            "                                "
+        ];
+        
+        this.sprites.policeCar = this._createCanvas(64, 32);
+        drawPixelArt(this.sprites.policeCar.getContext('2d'), policeCarArt);
+
         // Sentinel (eye creature)
         this.sprites.sentinel = this._createCanvas(32, 32);
         ctx = this.sprites.sentinel.getContext('2d');
@@ -531,18 +553,30 @@ TGH.Assets = {
         // Door (open) - just empty
         this.tiles.doorOpen = this._createCanvas(T, T);
 
-        // Exit portal
+        // Exit portal (Flagpole)
         this.tiles.exit = [];
+        var poleH = T * 6; // 192
         for (var f = 0; f < 4; f++) {
-            var ex = this._createCanvas(T, T);
-            ctx = ex.getContext('2d');
-            r = this._rect.bind(this, ctx);
-            var glow = f < 2 ? P.exitGold : P.exitGlow;
-            r(4, 2, 24, 28, P.outline);
-            r(6, 4, 20, 24, glow);
-            r(8, 6, 16, 20, P.exitGold);
-            r(10, 8 + f, 12, 4, '#fff');
-            r(12, 14 - f, 8, 4, '#fff8d0');
+            var ex = this._createCanvas(T, poleH);
+            var ctx = ex.getContext('2d');
+            var r = this._rect.bind(this, ctx);
+            
+            // Draw pole
+            r(14, 8, 4, poleH - 8, '#d8d8d8');
+            r(16, 8, 2, poleH - 8, '#ffffff'); // shine
+            
+            // Draw knob at top
+            r(12, 0, 8, 8, '#f8d830');
+            r(14, 2, 4, 4, '#ffffff');
+            
+            // Draw flag (animate it waving)
+            var wave = f % 2 === 0 ? 0 : 2;
+            r(0, 16 + wave, 14, 12, '#30b830');
+            
+            // Base block
+            r(0, poleH - T, T, T, P.stoneA);
+            r(2, poleH - T + 2, T - 4, T - 4, P.stoneB);
+            
             this.tiles.exit.push(ex);
         }
 

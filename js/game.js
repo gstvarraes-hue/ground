@@ -79,6 +79,8 @@ TGH.Game.prototype.loadLevel = function (index) {
             this.enemies.push(new TGH.Police(e.x * T, e.y * T - 28, e.speed));
         } else if (e.type === 'muscle') {
             this.enemies.push(new TGH.MuscleGuard(e.x * T, e.y * T - 40));
+        } else if (e.type === 'police_car') {
+            this.enemies.push(new TGH.PoliceCar(e.x * T, e.y * T - 32, e.dir));
         }
     }
 
@@ -524,7 +526,7 @@ TGH.Game.prototype.renderMenu = function (ctx, W, H) {
     ctx.font = '8px "Press Start 2P", monospace';
     ctx.fillText('SETAS PARA MOVER E PULAR (CIMA)', W / 2, H - 70);
     ctx.fillText('Z / X / ESPAÇO: DASH | C: ATIRAR', W / 2, H - 50);
-    ctx.fillText('10 FASES DE PURA ESTRATÉGIA', W / 2, H - 30);
+    ctx.fillText('12 FASES DE PURA ESTRATÉGIA', W / 2, H - 30);
 };
 
 TGH.Game.prototype.renderLevel = function (ctx, W, H) {
@@ -577,7 +579,7 @@ TGH.Game.prototype.renderLevel = function (ctx, W, H) {
                 ctx.drawImage(pressed ? tiles.buttonOn : tiles.buttonOff, dx, dy);
             } else if (t === 8) {
                 var ef = Math.floor(this.animTime * 4) % 4;
-                ctx.drawImage(tiles.exit[ef], dx, dy);
+                ctx.drawImage(tiles.exit[ef], dx, dy - (tiles.exit[ef].height - T));
             } else if (t === 9) {
                 ctx.drawImage(tiles.doorClosed, dx, dy);
             }
