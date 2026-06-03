@@ -80,6 +80,10 @@ TGH.Assets = {
         this.bgm.loop = true;
         this.bgm.volume = 0.4;
 
+        this.castleBgm = new Audio('https://ia800504.us.archive.org/33/items/SuperMarioBros.ThemeMusic/Castle.ogg');
+        this.castleBgm.loop = true;
+        this.castleBgm.volume = 0.4;
+
         this.gameOverBgm = new Audio('https://ia800504.us.archive.org/33/items/SuperMarioBros.ThemeMusic/GameOver.ogg');
         this.gameOverBgm.volume = 0.4;
 

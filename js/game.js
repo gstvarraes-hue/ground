@@ -182,8 +182,14 @@ TGH.Game.prototype.update = function (dt) {
                 TGH.Assets.victoryBgm.pause();
                 TGH.Assets.victoryBgm.currentTime = 0;
             }
-            if (TGH.Assets.bgm && TGH.Assets.bgm.paused) {
-                TGH.Assets.bgm.play().catch(function(e){});
+            if (this.currentLevel === 6 || this.currentLevel === 7) {
+                if (TGH.Assets.castleBgm && TGH.Assets.castleBgm.paused) {
+                    TGH.Assets.castleBgm.play().catch(function(e){});
+                }
+            } else {
+                if (TGH.Assets.bgm && TGH.Assets.bgm.paused) {
+                    TGH.Assets.bgm.play().catch(function(e){});
+                }
             }
         }
     } else if (this.state === TGH.STATE.PLAYING) {
@@ -220,7 +226,12 @@ TGH.Game.prototype.updateMenu = function (dt) {
             TGH.Assets.victoryBgm.pause();
             TGH.Assets.victoryBgm.currentTime = 0;
         }
-        if (TGH.Assets.bgm && TGH.Assets.bgm.paused) {
+        if (TGH.Assets.castleBgm) {
+            TGH.Assets.castleBgm.pause();
+            TGH.Assets.castleBgm.currentTime = 0;
+        }
+        if (TGH.Assets.bgm) {
+            if (!TGH.Assets.bgm.paused) TGH.Assets.bgm.pause();
             TGH.Assets.bgm.currentTime = 0;
             TGH.Assets.bgm.play().catch(function(e) { console.log('Audio error:', e); });
         }
@@ -444,6 +455,7 @@ TGH.Game.prototype.updatePlaying = function (dt) {
         if (this.lives <= 0) {
             this.state = TGH.STATE.DEAD;
             if (TGH.Assets.bgm) TGH.Assets.bgm.pause();
+            if (TGH.Assets.castleBgm) TGH.Assets.castleBgm.pause();
             if (TGH.Assets.gameOverBgm) {
                 TGH.Assets.gameOverBgm.currentTime = 0;
                 TGH.Assets.gameOverBgm.play().catch(function(e){});
@@ -475,6 +487,7 @@ TGH.Game.prototype.nextLevel = function () {
     TGH.Particles.emit(this.player.x + 10, this.player.y + 15, 20, '#f8f080', 150);
     
     if (TGH.Assets.bgm) TGH.Assets.bgm.pause();
+    if (TGH.Assets.castleBgm) TGH.Assets.castleBgm.pause();
     if (TGH.Assets.victoryBgm) {
         TGH.Assets.victoryBgm.currentTime = 0;
         TGH.Assets.victoryBgm.play().catch(function(e){});
