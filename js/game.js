@@ -201,6 +201,9 @@ TGH.Game.prototype.updateMenu = function (dt) {
         this.loadLevel(0);
         this.state = TGH.STATE.LEVEL_INTRO;
         this.introTimer = 3;
+        if (TGH.Assets.bgm && TGH.Assets.bgm.paused) {
+            TGH.Assets.bgm.play().catch(function(e) { console.log('Audio error:', e); });
+        }
     }
 };
 

@@ -72,6 +72,13 @@ TGH.Assets = {
         this.generateTileSprites();
         this.generateObstacleSprites();
         this.generateUISprites();
+        this.loadAudio();
+    },
+
+    loadAudio: function () {
+        this.bgm = new Audio('https://ia800504.us.archive.org/33/items/SuperMarioBros.ThemeMusic/SuperMarioBros.ogg');
+        this.bgm.loop = true;
+        this.bgm.volume = 0.4;
     },
 
     _createCanvas: function (w, h) {
