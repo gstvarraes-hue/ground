@@ -79,6 +79,12 @@ TGH.Assets = {
         this.bgm = new Audio('https://ia800504.us.archive.org/33/items/SuperMarioBros.ThemeMusic/SuperMarioBros.ogg');
         this.bgm.loop = true;
         this.bgm.volume = 0.4;
+
+        this.gameOverBgm = new Audio('https://ia800504.us.archive.org/33/items/SuperMarioBros.ThemeMusic/GameOver.ogg');
+        this.gameOverBgm.volume = 0.4;
+
+        this.victoryBgm = new Audio('https://ia800504.us.archive.org/33/items/SuperMarioBros.ThemeMusic/LevelComplete.ogg');
+        this.victoryBgm.volume = 0.4;
     },
 
     _createCanvas: function (w, h) {

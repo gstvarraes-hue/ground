@@ -178,6 +178,13 @@ TGH.Game.prototype.update = function (dt) {
         this.introTimer -= dt;
         if (this.introTimer <= 0 || TGH.Input.wasPressed('Enter') || TGH.Input.wasPressed(' ')) {
             this.state = TGH.STATE.PLAYING;
+            if (TGH.Assets.victoryBgm) {
+                TGH.Assets.victoryBgm.pause();
+                TGH.Assets.victoryBgm.currentTime = 0;
+            }
+            if (TGH.Assets.bgm && TGH.Assets.bgm.paused) {
+                TGH.Assets.bgm.play().catch(function(e){});
+            }
         }
     } else if (this.state === TGH.STATE.PLAYING) {
         this.updatePlaying(dt);
@@ -188,6 +195,10 @@ TGH.Game.prototype.update = function (dt) {
             this.state = TGH.STATE.MENU;
             this.lives = 5;
             this.currentLevel = 0;
+            if (TGH.Assets.victoryBgm) {
+                TGH.Assets.victoryBgm.pause();
+                TGH.Assets.victoryBgm.currentTime = 0;
+            }
         }
     }
 
@@ -201,7 +212,16 @@ TGH.Game.prototype.updateMenu = function (dt) {
         this.loadLevel(0);
         this.state = TGH.STATE.LEVEL_INTRO;
         this.introTimer = 3;
+        if (TGH.Assets.gameOverBgm) {
+            TGH.Assets.gameOverBgm.pause();
+            TGH.Assets.gameOverBgm.currentTime = 0;
+        }
+        if (TGH.Assets.victoryBgm) {
+            TGH.Assets.victoryBgm.pause();
+            TGH.Assets.victoryBgm.currentTime = 0;
+        }
         if (TGH.Assets.bgm && TGH.Assets.bgm.paused) {
+            TGH.Assets.bgm.currentTime = 0;
             TGH.Assets.bgm.play().catch(function(e) { console.log('Audio error:', e); });
         }
     }
@@ -423,6 +443,11 @@ TGH.Game.prototype.updatePlaying = function (dt) {
         this.lives--;
         if (this.lives <= 0) {
             this.state = TGH.STATE.DEAD;
+            if (TGH.Assets.bgm) TGH.Assets.bgm.pause();
+            if (TGH.Assets.gameOverBgm) {
+                TGH.Assets.gameOverBgm.currentTime = 0;
+                TGH.Assets.gameOverBgm.play().catch(function(e){});
+            }
         } else {
             this.loadLevel(this.currentLevel);
         }
@@ -438,12 +463,23 @@ TGH.Game.prototype.updateDead = function (dt) {
     if (TGH.Input.wasPressed('Enter') || TGH.Input.wasPressed(' ')) {
         this.state = TGH.STATE.MENU;
         this.lives = 5;
+        if (TGH.Assets.gameOverBgm) {
+            TGH.Assets.gameOverBgm.pause();
+            TGH.Assets.gameOverBgm.currentTime = 0;
+        }
     }
 };
 
 TGH.Game.prototype.nextLevel = function () {
     TGH.Particles.emit(this.player.x + 10, this.player.y + 15, 30, '#f8d830', 200);
     TGH.Particles.emit(this.player.x + 10, this.player.y + 15, 20, '#f8f080', 150);
+    
+    if (TGH.Assets.bgm) TGH.Assets.bgm.pause();
+    if (TGH.Assets.victoryBgm) {
+        TGH.Assets.victoryBgm.currentTime = 0;
+        TGH.Assets.victoryBgm.play().catch(function(e){});
+    }
+
     if (this.currentLevel >= TGH.Levels.count - 1) {
         this.state = TGH.STATE.VICTORY;
     } else {
