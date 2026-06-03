@@ -89,6 +89,9 @@ TGH.Assets = {
 
         this.victoryBgm = new Audio('https://ia800504.us.archive.org/33/items/SuperMarioBros.ThemeMusic/LevelComplete.ogg');
         this.victoryBgm.volume = 0.4;
+
+        this.jumpSound = new Audio('https://ia800504.us.archive.org/33/items/SuperMarioBros.ThemeMusic/Jump.ogg');
+        this.jumpSound.volume = 0.5;
     },
 
     _createCanvas: function (w, h) {

@@ -69,6 +69,10 @@ TGH.Player.prototype.update = function (dt, tileMap) {
                 this.vy = -this.jumpForce;
                 this.grounded = false;
                 TGH.Particles.emit(this.x + this.w / 2, this.y + this.h, 10, '#ffffff', 50);
+                if (TGH.Assets.jumpSound) {
+                    TGH.Assets.jumpSound.currentTime = 0;
+                    TGH.Assets.jumpSound.play().catch(function(e){});
+                }
             }
         }
         
