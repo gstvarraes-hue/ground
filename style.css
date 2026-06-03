@@ -25,11 +25,81 @@ body {
         0 0 40px rgba(80, 60, 180, 0.25),
         0 0 80px rgba(40, 30, 120, 0.15),
         inset 0 0 20px rgba(0, 0, 0, 0.6);
+    width: 100%;
+    max-width: 960px;
 }
 
 #gameCanvas {
     display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 960 / 640;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     background: #0a0a1a;
+}
+
+#mobile-controls {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    padding: 0 20px;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.ctrl-btn {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    width: 50px;
+    height: 50px;
+    user-select: none;
+    touch-action: manipulation;
+    outline: none;
+}
+.ctrl-btn:active {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+#dpad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+.dpad-row {
+    display: flex;
+    gap: 30px;
+}
+#action-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+#action-buttons .ctrl-btn {
+    border-radius: 10px;
+    width: auto;
+    min-width: 60px;
+    height: 50px;
+    padding: 0 10px;
+    font-size: 10px;
+}
+
+@media (max-width: 960px), (hover: none) and (pointer: coarse) {
+    #mobile-controls {
+        display: flex;
+    }
+    #game-container {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
 }

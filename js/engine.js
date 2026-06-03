@@ -30,6 +30,38 @@ TGH.Input = {
         window.addEventListener('touchstart', function () {
             self.justPressed['Click'] = true;
         });
+
+        // Mobile Controls
+        var binds = {
+            'btn-up': 'ArrowUp',
+            'btn-left': 'ArrowLeft',
+            'btn-right': 'ArrowRight',
+            'btn-dash': 'z',
+            'btn-shoot': 'c'
+        };
+        
+        for (var id in binds) {
+            var btn = document.getElementById(id);
+            if (btn) {
+                (function(key, b) {
+                    b.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        if (!self.keys[key]) self.justPressed[key] = true;
+                        self.keys[key] = true;
+                        self.justPressed['Click'] = true;
+                        self.justPressed['Enter'] = true;
+                    }, {passive: false});
+                    b.addEventListener('touchend', function(e) {
+                        e.preventDefault();
+                        self.keys[key] = false;
+                    }, {passive: false});
+                    b.addEventListener('touchcancel', function(e) {
+                        e.preventDefault();
+                        self.keys[key] = false;
+                    }, {passive: false});
+                })(binds[id], btn);
+            }
+        }
     },
 
     isDown: function (key) {
