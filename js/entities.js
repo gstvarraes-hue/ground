@@ -538,22 +538,25 @@ TGH.WindZone.prototype.render = function (ctx, camX, camY) {
 };
 
 // ── BOSS ──
-TGH.Boss = function (x, y) {
+TGH.Boss = function (x, y, isJunior) {
+    this.isJunior = isJunior || false;
     this.x = x;
     this.y = y;
-    this.w = 96;
-    this.h = 96;
-    this.speed = 40;
+    this.w = this.isJunior ? 64 : 96;
+    this.h = this.isJunior ? 64 : 96;
+    this.speed = this.isJunior ? 80 : 40;
     this.alive = true;
     this.animTimer = 0;
     this.offsetY = 0;
-    this.hp = 15;
-    this.maxHp = 15;
+    this.hp = this.isJunior ? 10 : 15;
+    this.maxHp = this.hp;
     this.shootTimer = 0;
-    this.shootInterval = 2.5;
+    this.shootInterval = this.isJunior ? 1.5 : 2.5;
     this.colorOverlay = 0;
     this.vy = 0;
-    this.maxSpeed = 100;
+    this.maxSpeed = this.isJunior ? 150 : 100;
+    this.jumpTimer = 0;
+    this.startY = y;
 };
 
 TGH.Boss.prototype.takeDamage = function () {
@@ -581,8 +584,19 @@ TGH.Boss.prototype.update = function (dt, playerX) {
         this.x -= this.speed * dt;
     }
 
-    // Gravity for when the boss falls
-    if (!this.isFlying && this.speed === 0) {
+    if (this.isJunior && !this.isFlying) {
+        this.vy += 980 * dt; // gravity
+        this.y += this.vy * dt;
+        if (this.y >= this.startY) {
+            this.y = this.startY;
+            this.vy = 0;
+            this.jumpTimer += dt;
+            if (this.jumpTimer > 1.5) {
+                this.jumpTimer = 0;
+                this.vy = -500; // Jump
+            }
+        }
+    } else if (!this.isFlying && this.speed === 0) {
         this.vy += 980 * dt; // gravity
         this.y += this.vy * dt;
     }
@@ -618,10 +632,19 @@ TGH.Boss.prototype.render = function (ctx, camX, camY) {
     if (this.colorOverlay > 0) {
         ctx.globalAlpha = 0.5 + 0.5 * this.colorOverlay;
         ctx.filter = 'sepia(100%) hue-rotate(300deg) saturate(500%) brightness(150%)'; // Red flash
+    } else if (this.isJunior) {
+        ctx.filter = 'hue-rotate(50deg) saturate(150%)'; // Junior color
     }
-    ctx.drawImage(TGH.Assets.sprites.boss,
-        Math.floor(this.x - camX),
-        Math.floor(this.y + this.offsetY - camY));
+    
+    if (this.isJunior) {
+        ctx.drawImage(TGH.Assets.sprites.boss,
+            0, 0, 128, 128,
+            Math.floor(this.x - camX), Math.floor(this.y + this.offsetY - camY), this.w, this.h);
+    } else {
+        ctx.drawImage(TGH.Assets.sprites.boss,
+            Math.floor(this.x - camX),
+            Math.floor(this.y + this.offsetY - camY));
+    }
     ctx.restore();
     
     // Health bar

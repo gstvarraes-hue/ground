@@ -117,7 +117,7 @@ TGH.Game.prototype.loadLevel = function (index) {
     // Boss
     if (this.levelData.boss) {
         var b = this.levelData.boss;
-        this.boss = new TGH.Boss(b.x * T, b.y * T);
+        this.boss = new TGH.Boss(b.x * T, b.y * T, b.isJunior);
         if (b.speed) this.boss.speed = b.speed;
         if (b.maxSpeed) this.boss.maxSpeed = b.maxSpeed;
         if (b.hp) {
