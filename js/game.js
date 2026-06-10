@@ -61,6 +61,8 @@ TGH.Game.prototype.loadLevel = function (index) {
     this.boss = null;
     this.buttons = [];
     this.doorLinks = {};
+    this.powerUps = [];
+    TGH.onBlockHit = this.onBlockHit.bind(this);
     TGH.Particles.clear();
 
     var T = TGH.TILE;
@@ -165,6 +167,20 @@ TGH.Game.prototype._linkButtonsAndDoors = function () {
         if (i < doors.length) {
             btns[i].door = doors[i];
         }
+    }
+};
+
+TGH.Game.prototype.onBlockHit = function(col, row) {
+    if (this.tileMap[row][col] === 10) {
+        this.tileMap[row][col] = 11; // Change to empty block
+        TGH.Particles.emit(col * TGH.TILE + 16, row * TGH.TILE, 10, '#e8a038', 100);
+        
+        // Spawn item based on player's power state
+        var type = 0; // Mushroom
+        if (this.player.powerState >= 1) {
+            type = (Math.random() < 0.2) ? 2 : 1; // 20% Star, 80% Fire Flower
+        }
+        this.powerUps.push(new TGH.PowerUp(col * TGH.TILE + 4, row * TGH.TILE, type));
     }
 };
 
@@ -285,7 +301,13 @@ TGH.Game.prototype.updatePlaying = function (dt) {
             var playerBottom = this.player.y + this.player.h;
             var enemyCenterY = en.y + en.h / 2;
             
-            if (this.player.vy > 0 && playerBottom < enemyCenterY + 12) {
+            if (this.player.invincibleTimer > 2.0) {
+                // Star power kills enemies
+                en.alive = false;
+                TGH.Particles.emit(en.x + en.w / 2, en.y + en.h / 2, 20, '#ffaa40', 150);
+                this.enemies.splice(i, 1);
+                i--;
+            } else if (this.player.vy > 0 && playerBottom < enemyCenterY + 12) {
                 // Stomp
                 en.alive = false;
                 TGH.Particles.emit(en.x + en.w / 2, en.y + en.h / 2, 20, '#ffaa40', 150);
@@ -304,8 +326,28 @@ TGH.Game.prototype.updatePlaying = function (dt) {
         }
     }
 
-    // Player shooting
-    if (TGH.Input.wasPressed('c') || TGH.Input.wasPressed('C')) {
+    // Update PowerUps
+    for (var i = this.powerUps.length - 1; i >= 0; i--) {
+        var pu = this.powerUps[i];
+        pu.update(dt, this.tileMap);
+        if (this.player.alive && TGH.Physics.overlap(this.player, pu)) {
+            // Collect power up
+            if (pu.type === 0) {
+                this.player.powerState = Math.max(this.player.powerState, 1);
+                TGH.Particles.emit(this.player.x + this.player.w/2, this.player.y + this.player.h/2, 20, '#ff4040', 150);
+            } else if (pu.type === 1) {
+                this.player.powerState = 2;
+                TGH.Particles.emit(this.player.x + this.player.w/2, this.player.y + this.player.h/2, 20, '#ffaa40', 150);
+            } else if (pu.type === 2) {
+                this.player.invincibleTimer = 12.0; // 10s star power (plus 2s margin)
+                TGH.Particles.emit(this.player.x + this.player.w/2, this.player.y + this.player.h/2, 30, '#f8d830', 200);
+            }
+            this.powerUps.splice(i, 1);
+        }
+    }
+
+    // Player shooting (only Fire Mario)
+    if ((TGH.Input.wasPressed('c') || TGH.Input.wasPressed('C')) && this.player.powerState === 2) {
         var dir = this.player.facingRight ? 1 : -1;
         var px = this.player.facingRight ? this.player.x + this.player.w : this.player.x - 12;
         var py = this.player.y + this.player.h / 2 - 6;
@@ -634,6 +676,11 @@ TGH.Game.prototype.renderLevel = function (ctx, W, H) {
                 ctx.drawImage(tiles.exit[ef], dx, dy - (tiles.exit[ef].height - T));
             } else if (t === 9) {
                 ctx.drawImage(tiles.doorClosed, dx, dy);
+            } else if (t === 10) {
+                var qf = Math.floor(this.animTime * 6) % 3;
+                ctx.drawImage(tiles.questionBlock[qf], dx, dy);
+            } else if (t === 11) {
+                ctx.drawImage(tiles.emptyBlock, dx, dy);
             }
         }
     }
@@ -661,6 +708,11 @@ TGH.Game.prototype.renderLevel = function (ctx, W, H) {
     // Lasers
     for (var i = 0; i < this.lasers.length; i++) {
         this.lasers[i].render(ctx, camX, camY);
+    }
+
+    // Power Ups
+    for (var i = 0; i < this.powerUps.length; i++) {
+        this.powerUps[i].render(ctx, camX, camY);
     }
 
     // Projectiles
