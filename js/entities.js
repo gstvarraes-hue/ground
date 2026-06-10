@@ -28,12 +28,19 @@ TGH.Player = function (x, y) {
     this.attackTimer = 0;
     this.dashSpeed = 450;
     this.jumpForce = 450;
+    this.isPlayer = true;
+    this.powerState = 0; // 0=Small, 1=Super, 2=Fire
+    this.invincibleTimer = 0;
 };
 
 TGH.Player.prototype.update = function (dt, tileMap) {
     if (!this.alive) {
         this.deathTimer -= dt;
         return;
+    }
+
+    if (this.invincibleTimer > 0) {
+        this.invincibleTimer -= dt;
     }
 
     var input = TGH.Input;
@@ -119,6 +126,15 @@ TGH.Player.prototype.update = function (dt, tileMap) {
 
 TGH.Player.prototype.die = function () {
     if (!this.alive) return;
+    if (this.invincibleTimer > 0) return; // Invincible!
+
+    if (this.powerState > 0) {
+        this.powerState = 0;
+        this.invincibleTimer = 2.0; // 2 seconds i-frames
+        TGH.Particles.emit(this.x + this.w / 2, this.y + this.h / 2, 15, '#ffffff', 100);
+        return;
+    }
+
     this.alive = false;
     this.deathTimer = 1.5;
     TGH.Particles.emit(this.x + this.w / 2, this.y + this.h / 2, 20, '#ff4040', 200);
@@ -159,16 +175,85 @@ TGH.Player.prototype.render = function (ctx, camX, camY) {
             sprite = sprites.playerIdle;
         }
 
+        if (this.invincibleTimer > 0) {
+            if (Math.floor(this.invincibleTimer * 10) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+            if (this.invincibleTimer > 2.0) {
+                var hue = Math.floor(this.invincibleTimer * 360 * 3) % 360;
+                ctx.filter = 'hue-rotate(' + hue + 'deg) saturate(300%)';
+            }
+        } else if (this.powerState === 2) {
+            ctx.filter = 'hue-rotate(180deg) saturate(150%) brightness(120%)';
+        }
+
+        var scaleY = (this.powerState > 0) ? 1.3 : 1.0;
+        var drawH = 32 * scaleY;
+        var dyAdjust = 32 - drawH;
+
         if (!this.facingRight) {
-            ctx.translate(dx + 32, dy);
+            ctx.translate(dx + 32, dy + dyAdjust);
             ctx.scale(-1, 1);
-            ctx.drawImage(sprite, 0, 0);
+            ctx.drawImage(sprite, 0, 0, 32, 32, 0, 0, 32, drawH);
         } else {
-            ctx.drawImage(sprite, dx, dy);
+            ctx.drawImage(sprite, 0, 0, 32, 32, dx, dy + dyAdjust, 32, drawH);
         }
     }
     ctx.restore();
     ctx.globalAlpha = 1;
+};
+
+// ── POWER UP ──
+TGH.PowerUp = function (x, y, type) {
+    this.x = x;
+    this.y = y;
+    this.w = 24;
+    this.h = 24;
+    this.type = type; // 0=Mushroom, 1=Flower, 2=Star
+    this.vx = (this.type === 1) ? 0 : 80;
+    this.vy = -150; // Pops out of block
+    this.alive = true;
+};
+
+TGH.PowerUp.prototype.update = function (dt, tileMap) {
+    if (this.type === 1) {
+        if (this.vy < 0) {
+            this.y += this.vy * dt;
+            this.vy += 800 * dt;
+        }
+        return;
+    }
+
+    this.x += this.vx * dt;
+
+    var T = TGH.TILE;
+    var checkCol = Math.floor((this.x + (this.vx > 0 ? this.w : 0)) / T);
+    var checkRow = Math.floor((this.y + this.h / 2) / T);
+    if (TGH.Physics.isSolid(tileMap, checkCol, checkRow)) {
+        this.vx *= -1;
+    }
+
+    this.vy += TGH.Physics.GRAVITY * dt;
+    if (this.vy > TGH.Physics.MAX_FALL) this.vy = TGH.Physics.MAX_FALL;
+
+    this.y += this.vy * dt;
+    var bottom = Math.floor((this.y + this.h) / T);
+    var col = Math.floor((this.x + this.w / 2) / T);
+    if (TGH.Physics.isSolid(tileMap, col, bottom)) {
+        this.y = bottom * T - this.h;
+        if (this.type === 2) {
+            this.vy = -300; // Star bounces
+        } else {
+            this.vy = 0;
+        }
+    }
+};
+
+TGH.PowerUp.prototype.render = function (ctx, camX, camY) {
+    var sprite = TGH.Assets.sprites.mushroom;
+    if (this.type === 1) sprite = TGH.Assets.sprites.fireFlower;
+    if (this.type === 2) sprite = TGH.Assets.sprites.star;
+    ctx.drawImage(sprite, Math.floor(this.x - 4 - camX), Math.floor(this.y - 8 - camY));
 };
 
 // ── PATROLLER ENEMY ──

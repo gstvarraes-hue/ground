@@ -121,7 +121,7 @@ TGH.Physics = {
             return true; // Out of bounds = solid
         }
         var t = tileMap[row][col];
-        return t === 1 || t === 9; // 1=wall, 9=closed door
+        return t === 1 || t === 9 || t === 10 || t === 11; // 1=wall, 9=door, 10=?, 11=empty
     },
 
     // Get tile type at position
@@ -185,6 +185,9 @@ TGH.Physics = {
                     } else if (entity.vy < 0) {
                         entity.y = (row + 1) * T;
                         entity.vy = 0;
+                        if (entity.isPlayer && typeof TGH.onBlockHit === 'function') {
+                            TGH.onBlockHit(col, row);
+                        }
                     }
                 }
             }

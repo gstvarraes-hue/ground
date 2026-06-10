@@ -60,6 +60,15 @@ TGH.PALETTE = {
     bgDark: '#0c0c18',
     bgMid: '#141428',
     bgLight: '#1c1c38',
+    // Blocks
+    blockYellow: '#e8a038',
+    blockBrown: '#885018',
+    blockDark: '#402010',
+    // Items
+    itemRed: '#e83030',
+    itemGreen: '#30b830',
+    itemOrange: '#e88028',
+    itemYellow: '#f8d830'
 };
 
 TGH.Assets = {
@@ -457,6 +466,38 @@ TGH.Assets = {
         r(2, 4, 12, 8, P.fireball);
         r(6, 4, 4, 8, P.fireballBright);
         r(4, 6, 8, 4, P.fireballBright);
+
+        // Power-ups
+        // Mushroom
+        this.sprites.mushroom = this._createCanvas(32, 32);
+        ctx = this.sprites.mushroom.getContext('2d');
+        r = this._rect.bind(this, ctx);
+        r(6, 6, 20, 14, P.itemRed);
+        r(10, 8, 4, 4, '#fff'); r(18, 10, 6, 6, '#fff'); r(6, 14, 6, 4, '#fff');
+        r(10, 20, 12, 10, P.skin);
+        r(12, 22, 2, 4, '#000'); r(18, 22, 2, 4, '#000');
+
+        // Fire Flower
+        this.sprites.fireFlower = this._createCanvas(32, 32);
+        ctx = this.sprites.fireFlower.getContext('2d');
+        r = this._rect.bind(this, ctx);
+        r(14, 20, 4, 12, P.itemGreen); // stem
+        r(8, 22, 8, 4, P.itemGreen); r(16, 26, 8, 4, P.itemGreen); // leaves
+        r(8, 6, 16, 16, P.itemRed); // flower outer
+        r(10, 8, 12, 12, P.itemOrange); // flower inner
+        r(12, 10, 8, 8, P.itemYellow); // flower center
+        r(14, 12, 2, 2, '#000'); r(18, 12, 2, 2, '#000'); // eyes
+
+        // Star
+        this.sprites.star = this._createCanvas(32, 32);
+        ctx = this.sprites.star.getContext('2d');
+        r = this._rect.bind(this, ctx);
+        r(14, 4, 4, 8, P.itemYellow);
+        r(6, 12, 20, 8, P.itemYellow);
+        r(10, 16, 12, 8, P.itemYellow);
+        r(8, 22, 6, 8, P.itemYellow);
+        r(18, 22, 6, 8, P.itemYellow);
+        r(12, 14, 2, 4, '#000'); r(18, 14, 2, 4, '#000'); // eyes
     },
 
     // ── TILES ──
@@ -619,6 +660,30 @@ TGH.Assets = {
         r(4, 4, 2, 2, P.bgMid);
         r(20, 12, 2, 2, P.bgMid);
         r(12, 24, 2, 2, P.bgMid);
+
+        // Question Block
+        this.tiles.questionBlock = [];
+        for (var f = 0; f < 3; f++) {
+            var qb = this._createCanvas(T, T);
+            ctx = qb.getContext('2d');
+            r = this._rect.bind(this, ctx);
+            r(0, 0, T, T, P.blockBrown);
+            r(2, 2, 28, 28, P.blockYellow);
+            r(0, 0, 4, 4, '#000'); r(28, 0, 4, 4, '#000');
+            r(0, 28, 4, 4, '#000'); r(28, 28, 4, 4, '#000');
+            var shade = (f === 1) ? P.itemOrange : P.blockDark;
+            r(12, 6, 8, 4, shade); r(20, 10, 4, 6, shade); r(14, 14, 6, 4, shade); r(14, 22, 4, 4, shade);
+            this.tiles.questionBlock.push(qb);
+        }
+
+        // Empty Block
+        this.tiles.emptyBlock = this._createCanvas(T, T);
+        ctx = this.tiles.emptyBlock.getContext('2d');
+        r = this._rect.bind(this, ctx);
+        r(0, 0, T, T, P.blockBrown);
+        r(2, 2, 28, 28, P.blockDark);
+        r(0, 0, 4, 4, '#000'); r(28, 0, 4, 4, '#000');
+        r(0, 28, 4, 4, '#000'); r(28, 28, 4, 4, '#000');
     },
 
     // ── OBSTACLES ──
