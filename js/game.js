@@ -119,15 +119,19 @@ TGH.Game.prototype.loadLevel = function (index) {
     // Boss
     if (this.levelData.boss) {
         var b = this.levelData.boss;
-        this.boss = new TGH.Boss(b.x * T, b.y * T, b.isJunior);
-        if (b.speed) this.boss.speed = b.speed;
-        if (b.maxSpeed) this.boss.maxSpeed = b.maxSpeed;
-        if (b.hp) {
-            this.boss.hp = b.hp;
-            this.boss.maxHp = b.hp;
+        if (b.type === 'dragon') {
+            this.boss = new TGH.DragonBoss(b.x * T, b.y * T, b.hp);
+        } else {
+            this.boss = new TGH.Boss(b.x * T, b.y * T, b.isJunior);
+            if (b.speed) this.boss.speed = b.speed;
+            if (b.maxSpeed) this.boss.maxSpeed = b.maxSpeed;
+            if (b.hp) {
+                this.boss.hp = b.hp;
+                this.boss.maxHp = b.hp;
+            }
+            if (b.shootInterval) this.boss.shootInterval = b.shootInterval;
+            if (b.flying) this.boss.isFlying = true;
         }
-        if (b.shootInterval) this.boss.shootInterval = b.shootInterval;
-        if (b.flying) this.boss.isFlying = true;
     }
 
     // Car level
@@ -180,6 +184,9 @@ TGH.Game.prototype.onBlockHit = function(col, row) {
         if (this.player.powerState >= 1) {
             type = (Math.random() < 0.2) ? 2 : 1; // 20% Star, 80% Fire Flower
         }
+        if (this.currentLevel === 13) {
+            type = 2; // Always drop star in Phase 14
+        }
         this.powerUps.push(new TGH.PowerUp(col * TGH.TILE + 4, row * TGH.TILE, type));
     }
 };
@@ -191,8 +198,14 @@ TGH.Game.prototype.update = function (dt) {
     if (this.state === TGH.STATE.MENU) {
         this.updateMenu(dt);
     } else if (this.state === TGH.STATE.LEVEL_INTRO) {
-        this.introTimer -= dt;
-        if (this.introTimer <= 0 || TGH.Input.wasPressed('Enter') || TGH.Input.wasPressed(' ')) {
+        var ld = TGH.Levels.data[this.currentLevel];
+        if (!ld || !ld.dialog) {
+            this.introTimer -= dt;
+        }
+        
+        var canSkip = (ld && ld.dialog) ? true : (this.introTimer <= 0);
+        
+        if (canSkip && (TGH.Input.wasPressed('Enter') || TGH.Input.wasPressed(' ') || (!ld.dialog && this.introTimer <= 0))) {
             this.state = TGH.STATE.PLAYING;
             if (TGH.Assets.victoryBgm) {
                 TGH.Assets.victoryBgm.pause();
@@ -422,43 +435,59 @@ TGH.Game.prototype.updatePlaying = function (dt) {
 
     // Update boss
     if (this.boss && this.boss.alive) {
-        var shouldShoot = this.boss.update(dt, this.player.x);
-        
-        if (shouldShoot) {
-            var px = this.boss.x < this.player.x ? this.boss.x + this.boss.w : this.boss.x - 12;
-            var dir = this.boss.x < this.player.x ? 1 : -1;
-            var py = this.boss.y + this.boss.h / 2 - 6;
-            this.projectiles.push(new TGH.Projectile(px, py, dir));
-            this.projectiles.push(new TGH.Projectile(px, py - 20, dir)); // shoot 2 at once
-            if (this.boss.shootInterval < 2.0) {
-                this.projectiles.push(new TGH.Projectile(px, py + 20, dir));
+        if (this.boss.isDragon) {
+            this.boss.update(dt, this);
+        } else {
+            var shouldShoot = this.boss.update(dt, this.player.x);
+            
+            if (shouldShoot) {
+                var px = this.boss.x < this.player.x ? this.boss.x + this.boss.w : this.boss.x - 12;
+                var dir = this.boss.x < this.player.x ? 1 : -1;
+                var py = this.boss.y + this.boss.h / 2 - 6;
+                this.projectiles.push(new TGH.Projectile(px, py, dir));
+                this.projectiles.push(new TGH.Projectile(px, py - 20, dir)); // shoot 2 at once
+                if (this.boss.shootInterval < 2.0) {
+                    this.projectiles.push(new TGH.Projectile(px, py + 20, dir));
+                }
+                if (this.boss.shootInterval < 1.0) {
+                    this.projectiles.push(new TGH.Projectile(px, py - 40, dir));
+                }
             }
-            if (this.boss.shootInterval < 1.0) {
-                this.projectiles.push(new TGH.Projectile(px, py - 40, dir));
+            
+            // Check if boss falls into lava (Y out of bounds)
+            if (this.boss.y > this.tileMap.length * TGH.TILE) {
+                this.boss.alive = false;
             }
-        }
-        
-        // Check if boss falls into lava (Y out of bounds)
-        if (this.boss.y > this.tileMap.length * TGH.TILE) {
-            this.boss.alive = false;
         }
         
         if (this.player.alive && TGH.Physics.overlap(this.player, this.boss)) {
             var playerBottom = this.player.y + this.player.h;
             var bossCenterY = this.boss.y + this.boss.h / 2;
             
-            if (this.player.vy > 0 && playerBottom < bossCenterY + 20) {
-                this.player.vy = -400; // Bounce
-                TGH.Particles.emit(this.boss.x + this.boss.w/2, this.boss.y + this.boss.h/2, 30, '#ff4040', 200);
-                this.screenShake = 0.2;
-            } else if (this.player.isAttacking) {
-                this.player.vx = (this.player.x < this.boss.x ? -1 : 1) * 300;
-                this.player.isAttacking = false;
-                TGH.Particles.emit(this.boss.x + this.boss.w/2, this.boss.y + this.boss.h/2, 30, '#ff4040', 200);
-                this.screenShake = 0.2;
+            if (this.boss.isDragon) {
+                if (this.player.invincibleTimer > 2.0) {
+                    this.boss.takeDamage();
+                    this.player.vx = (this.player.x < this.boss.x ? -1 : 1) * 400;
+                    this.player.vy = -300;
+                    this.screenShake = 0.4;
+                } else {
+                    this.player.die();
+                    this.screenShake = 0.5;
+                }
             } else {
-                this.player.die();
-                this.screenShake = 0.5;
+                if (this.player.vy > 0 && playerBottom < bossCenterY + 20) {
+                    this.player.vy = -400; // Bounce
+                    TGH.Particles.emit(this.boss.x + this.boss.w/2, this.boss.y + this.boss.h/2, 30, '#ff4040', 200);
+                    this.screenShake = 0.2;
+                } else if (this.player.isAttacking) {
+                    this.player.vx = (this.player.x < this.boss.x ? -1 : 1) * 300;
+                    this.player.isAttacking = false;
+                    TGH.Particles.emit(this.boss.x + this.boss.w/2, this.boss.y + this.boss.h/2, 30, '#ff4040', 200);
+                    this.screenShake = 0.2;
+                } else {
+                    this.player.die();
+                    this.screenShake = 0.5;
+                }
             }
         }
     }
@@ -766,11 +795,50 @@ TGH.Game.prototype.renderLevelIntro = function (ctx, W, H) {
     ctx.font = '10px "Press Start 2P", monospace';
     ctx.fillText(this.levelData.subtitle, W / 2, H / 2 + 10);
 
+    if (this.levelData.dialog) {
+        var dW = 600;
+        var dH = 100;
+        var dX = W / 2 - dW / 2;
+        var dY = H / 2 + 40;
+        
+        ctx.fillStyle = 'rgba(20, 20, 40, 0.9)';
+        ctx.fillRect(dX, dY, dW, dH);
+        ctx.strokeStyle = '#f8d830';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(dX, dY, dW, dH);
+        
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#f8d830';
+        ctx.font = '14px "Press Start 2P", monospace';
+        ctx.fillText(this.levelData.dialog.speaker + ":", dX + 20, dY + 30);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '10px "Press Start 2P", monospace';
+        
+        var words = this.levelData.dialog.text.split(' ');
+        var line = '';
+        var lineY = dY + 60;
+        for (var i = 0; i < words.length; i++) {
+            var testLine = line + words[i] + ' ';
+            var metrics = ctx.measureText(testLine);
+            if (metrics.width > dW - 40 && i > 0) {
+                ctx.fillText(line, dX + 20, lineY);
+                line = words[i] + ' ';
+                lineY += 20;
+            } else {
+                line = testLine;
+            }
+        }
+        ctx.fillText(line, dX + 20, lineY);
+    }
+
     var blink = Math.sin(this.animTime * 6) > 0;
     if (blink) {
         ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
         ctx.font = '8px "Press Start 2P", monospace';
-        ctx.fillText('PRESSIONE ENTER OU CLIQUE', W / 2, H / 2 + 60);
+        var blinkY = this.levelData.dialog ? H - 40 : H / 2 + 60;
+        ctx.fillText('PRESSIONE ENTER OU CLIQUE', W / 2, blinkY);
     }
 };
 

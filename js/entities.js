@@ -902,3 +902,82 @@ TGH.PoliceCar.prototype.render = function (ctx, camX, camY) {
     }
     ctx.restore();
 };
+
+// ── DRAGON BOSS ──
+TGH.DragonBoss = function (x, y, hp) {
+    this.x = x;
+    this.y = y;
+    this.w = 128;
+    this.h = 128;
+    this.baseY = y;
+    this.alive = true;
+    this.animTimer = 0;
+    this.hp = hp || 10;
+    this.maxHp = this.hp;
+    this.shootTimer = 0;
+    this.shootInterval = 1.2;
+    this.colorOverlay = 0;
+    this.isDragon = true;
+};
+
+TGH.DragonBoss.prototype.update = function (dt, game) {
+    if (!this.alive) return;
+
+    this.animTimer += dt;
+    if (this.colorOverlay > 0) this.colorOverlay -= dt;
+
+    // Bob up and down faster and wider
+    this.y = this.baseY + Math.sin(this.animTimer * 3.5) * 60;
+
+    // Shoot projectiles
+    this.shootTimer -= dt;
+    if (this.shootTimer <= 0) {
+        this.shootTimer = this.shootInterval;
+        var pY = this.y + 64;
+        var pX = this.x - 20;
+        game.lasers.push(new TGH.Laser(pX, pY, -1, 350));
+        game.lasers.push(new TGH.Laser(pX, pY + 30, -1, 300));
+        game.lasers.push(new TGH.Laser(pX, pY - 30, -1, 300));
+        game.lasers.push(new TGH.Laser(pX, pY + 60, -1, 250));
+        game.lasers.push(new TGH.Laser(pX, pY - 60, -1, 250));
+    }
+};
+
+TGH.DragonBoss.prototype.takeDamage = function () {
+    if (this.colorOverlay > 0) return; // Invulnerability frames
+
+    this.hp--;
+    this.colorOverlay = 0.5; // flash red
+    if (this.hp <= 0) {
+        this.alive = false;
+        TGH.Particles.emit(this.x + this.w / 2, this.y + this.h / 2, 100, '#ffaa40', 300);
+    } else {
+        TGH.Particles.emit(this.x + this.w / 2, this.y + this.h / 2, 20, '#ff4040', 200);
+    }
+};
+
+TGH.DragonBoss.prototype.render = function (ctx, camX, camY) {
+    var px = Math.floor(this.x - camX);
+    var py = Math.floor(this.y - camY);
+
+    if (this.colorOverlay > 0) {
+        ctx.filter = 'saturate(500%) hue-rotate(90deg)'; // Turn reddish/yellowish
+    }
+
+    // Draw sprite mirrored (facing left)
+    ctx.save();
+    ctx.translate(px + this.w, py);
+    ctx.scale(-1, 1);
+    ctx.drawImage(TGH.Assets.sprites.dragon, 0, 0);
+    ctx.restore();
+
+    ctx.globalAlpha = 1;
+    ctx.filter = 'none';
+
+    // Draw Health Bar
+    ctx.fillStyle = '#000';
+    ctx.fillRect(px, py - 12, this.w, 6);
+    ctx.fillStyle = '#f00';
+    var hpw = Math.max(0, (this.hp / this.maxHp) * this.w);
+    ctx.fillRect(px, py - 12, hpw, 6);
+};

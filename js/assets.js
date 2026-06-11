@@ -458,6 +458,63 @@ TGH.Assets = {
             }
         }
 
+        // Ruined Dragon (Mario Odyssey style)
+        var dragon = [
+            "               YY               ",
+            "             YYYYYY             ",
+            "            YY    YY            ",
+            "           YY      YY           ",
+            "          YY        YY          ",
+            "          DDDDDDDDDDDD          ",
+            "        DDDDDDDDDDDDDDDD        ",
+            "       DDDDWWDDDDDDWWDDDD       ",
+            "       DDKKWWDDDDDDKKWWDDOO     ",
+            "       DDDDDDDDDDDDDDDDDDOO     ",
+            "        DDDDDDDDDDDDDDDDDOO     ",
+            "        DDDDDDDDDDDDDDDDDOO     ",
+            "         OOOOOOOOOOOOOOO        ",
+            "         OOOOOOOOOOOOOOO        ",
+            "         OOOOOOOOOOOOOOO        ",
+            "          DDDDDDDDDDDDD         ",
+            "         DDDDDDDDDDDDDDD        ",
+            "        DDDDDDDDDDDDDDDDD       ",
+            "       DDDDDDDDDDDDDDDDDDD      ",
+            "      DDDDDDDDDDDDDDDDDDDDD     ",
+            "      DDDDDDDDDDDDDDDDDDDDD     ",
+            "      DDDDDDDDDDDDDDDDDDDDD     ",
+            "      DDDDDDDDDDDDDDDDDDDDD     ",
+            "      DDDDDDDDDDDDDDDDDDDDD     ",
+            "      DDDDDDDDDDDDDDDDDDDDD     ",
+            "      DDDDDDDDDDDDDDDDDDDDD     ",
+            "       DDDDDDDDDDDDDDDDDDD      ",
+            "        DDDDDDDDDDDDDDDDD       ",
+            "          DDDDDDDDDDDDD         ",
+            "           DDDDDDDDDDD          ",
+            "            DDDDDDDDD           ",
+            "             DDDDDDD            "
+        ];
+        
+        this.sprites.dragon = this._createCanvas(128, 128);
+        ctx = this.sprites.dragon.getContext('2d');
+        
+        var dragonColors = {
+            'Y': '#f8d830', // Yellow horns
+            'D': '#403050', // Dark purple/grey scales
+            'W': '#ffffff', // Eye white
+            'K': '#f8d830', // Glowing yellow eye
+            'O': '#201830'  // Darker snout
+        };
+
+        for (var y = 0; y < dragon.length; y++) {
+            for (var x = 0; x < dragon[y].length; x++) {
+                var c = dragon[y][x];
+                if (dragonColors[c]) {
+                    ctx.fillStyle = dragonColors[c];
+                    ctx.fillRect(x * 4, y * 4, 4, 4);
+                }
+            }
+        }
+
         // Projectile
         this.sprites.projectile = this._createCanvas(16, 16);
         ctx = this.sprites.projectile.getContext('2d');
