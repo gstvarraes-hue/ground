@@ -81,6 +81,7 @@ TGH.Assets = {
         this.generateTileSprites();
         this.generateObstacleSprites();
         this.generateUISprites();
+        this.generatePortraits();
         this.loadAudio();
     },
 
@@ -460,49 +461,51 @@ TGH.Assets = {
 
         // Ruined Dragon (Mario Odyssey style)
         var dragon = [
-            "               YY               ",
-            "             YYYYYY             ",
-            "            YY    YY            ",
-            "           YY      YY           ",
-            "          YY        YY          ",
-            "          DDDDDDDDDDDD          ",
+            "               YY    YY         ",
+            "              YYYY  YYYY        ",
+            "             YYYYY  YYYYY       ",
+            "            YYYYPPPPPPYYYY      ",
+            "            YY PPPPPPPP YY      ",
+            "            Y PPPPWWPPPP Y      ",
+            "              PPPPWWPPPP        ",
+            "             LLLLLLLLLLLL       ",
+            "            LLLLLLLLLLLLLL      ",
+            "            LLKWLLLLLLWKLL      ",
+            "            LLWWLLLLLLWWLL      ",
+            "             LLLLLLLLLLLL       ",
+            "             DDDDDDDDDDDD       ",
+            "           DDDDDDDDDDDDDD       ",
+            "         DDDDEEEEEEEEEEEDD      ",
+            "         DDDDDDDDDDDDDDDD       ",
             "        DDDDDDDDDDDDDDDD        ",
-            "       DDDDWWDDDDDDWWDDDD       ",
-            "       DDKKWWDDDDDDKKWWDDOO     ",
-            "       DDDDDDDDDDDDDDDDDDOO     ",
-            "        DDDDDDDDDDDDDDDDDOO     ",
-            "        DDDDDDDDDDDDDDDDDOO     ",
-            "         OOOOOOOOOOOOOOO        ",
-            "         OOOOOOOOOOOOOOO        ",
-            "         OOOOOOOOOOOOOOO        ",
-            "          DDDDDDDDDDDDD         ",
-            "         DDDDDDDDDDDDDDD        ",
-            "        DDDDDDDDDDDDDDDDD       ",
-            "       DDDDDDDDDDDDDDDDDDD      ",
-            "      DDDDDDDDDDDDDDDDDDDDD     ",
-            "      DDDDDDDDDDDDDDDDDDDDD     ",
-            "      DDDDDDDDDDDDDDDDDDDDD     ",
-            "      DDDDDDDDDDDDDDDDDDDDD     ",
-            "      DDDDDDDDDDDDDDDDDDDDD     ",
-            "      DDDDDDDDDDDDDDDDDDDDD     ",
-            "      DDDDDDDDDDDDDDDDDDDDD     ",
-            "       DDDDDDDDDDDDDDDDDDD      ",
-            "        DDDDDDDDDDDDDDDDD       ",
-            "          DDDDDDDDDDDDD         ",
-            "           DDDDDDDDDDD          ",
-            "            DDDDDDDDD           ",
-            "             DDDDDDD            "
+            "       DDDDDDDDDDDDDDDDD        ",
+            "      DDDDDDDDDDDDDDDDDD        ",
+            "      DDDDDDDDDDDDDDDDD         ",
+            "       DDDDDDDDDDDDDDDD         ",
+            "       DDDDDDDDDDDDDDD          ",
+            "        DDDDDDDDDDDDDD          ",
+            "        DDDDDDDDDDDDD           ",
+            "         DDDDDDDDDDDD           ",
+            "         DDDDDDDDDDD            ",
+            "          DDDDDDDDDD            ",
+            "           DDDDDDDD             ",
+            "            DDDDDD              ",
+            "             DDDD               ",
+            "               DD               ",
+            "                                "
         ];
         
         this.sprites.dragon = this._createCanvas(128, 128);
         ctx = this.sprites.dragon.getContext('2d');
         
         var dragonColors = {
-            'Y': '#f8d830', // Yellow horns
-            'D': '#403050', // Dark purple/grey scales
-            'W': '#ffffff', // Eye white
-            'K': '#f8d830', // Glowing yellow eye
-            'O': '#201830'  // Darker snout
+            'Y': '#ffdf00', // Gold horns / crown
+            'D': '#3b3b4a', // Dark grey scales
+            'L': '#5c5c70', // Light grey scales
+            'P': '#d04080', // Pink exposed skull/brain
+            'W': '#ffffff', // White glow
+            'K': '#000000', // Black eye center
+            'E': '#ffea00'  // Glowing yellow lightning in mouth
         };
 
         for (var y = 0; y < dragon.length; y++) {
@@ -767,5 +770,113 @@ TGH.Assets = {
         r(4, 12, 6, 2, '#e83030');
         r(6, 14, 2, 2, '#e83030');
         r(2, 2, 2, 2, '#ff6060');
+    },
+
+    generatePortraits: function () {
+        var self = this;
+        var pScale = 4; // Portraits are 64x64 (16x16 pixels * 4)
+
+        var colors = {
+            'P': '#ffa6c9', // Peach pink
+            'Y': '#fced23', // Yellow (crown/hair)
+            'S': '#ffcca5', // Skin
+            'B': '#004fe8', // Blue (eyes)
+            'W': '#ffffff', // White
+            'K': '#000000', // Black
+            'G': '#43b047', // Green (Bowser shell/Kamek)
+            'O': '#f8981d', // Orange (Bowser hair/fire)
+            'R': '#e52521', // Red
+            'D': '#6e3c19'  // Brown (Bowser horns/Kamek wand)
+        };
+
+        function drawPortrait(map) {
+            var c = self._createCanvas(64, 64);
+            var ctx = c.getContext('2d');
+            for (var r = 0; r < map.length; r++) {
+                for (var col = 0; col < map[r].length; col++) {
+                    var ch = map[r][col];
+                    if (colors[ch]) {
+                        self._rect(ctx, col * pScale, r * pScale, pScale, pScale, colors[ch]);
+                    }
+                }
+            }
+            return c;
+        }
+
+        this.sprites.portraitPeach = drawPortrait([
+            "      YYYY      ",
+            "     YRRRRY     ",
+            "    YYYYYYYY    ",
+            "   YYYSSSSYYY   ",
+            "   YYSSBSSBSS   ",
+            "   YYSSWSSWSS   ",
+            "   YYSSSSSSSS   ",
+            "   YYSSSRRSSS   ",
+            "    YYSSSSS     ",
+            "     PPPPPP     ",
+            "    PPPPPPPP    ",
+            "   PPPBBBBPPP   ",
+            "   PPPPPPPPPP   ",
+            "   PPPPPPPPPP   ",
+            "   PPPPPPPPPP   ",
+            "   PPPPPPPPPP   "
+        ]);
+
+        this.sprites.portraitBowser = drawPortrait([
+            "   OOOOOOOOO    ",
+            "  OOOOOOOOOOO   ",
+            "  GGGGKKSGGGG   ",
+            " GGGDKKKSGDGGG  ",
+            " GGGDKKKSGDGGG  ",
+            " GGGGSSSSSGGGG  ",
+            " GSSSRRSSSRSSG  ",
+            " SSSSSSSSSSSSS  ",
+            "  SWWSSWSSWWS   ",
+            "  SSSSSSSSSSS   ",
+            "   WWWWWSSWW    ",
+            "  GGGGGGGGGGG   ",
+            "  GYGGGYGGGYG   ",
+            " GGGGGGGGGGGGG  ",
+            "  GYGGGYGGGYG   ",
+            "   GGGGGGGGG    "
+        ]);
+
+        this.sprites.portraitKamek = drawPortrait([
+            "      BBBB      ",
+            "     BBBBBB     ",
+            "    BBBBBBBB    ",
+            "   BBBBBBBBBB   ",
+            "   BBWBBBBWBB   ",
+            "   BBKBBBBKBB   ",
+            "   BBWWWWWWBB   ",
+            "    BBBBBBBB    ",
+            "      BBBB      ",
+            "     BBBBBB     ",
+            "    BBBBBBBB    ",
+            "   DDDBBBBBDDD  ",
+            "   DDYBBBBBBDD  ",
+            "   BBBBBBBBBBB  ",
+            "   BBBBBBBBBBB  ",
+            "   BBBBBBBBBBB  "
+        ]);
+
+        this.sprites.portraitBowserJr = drawPortrait([
+            "      OOO       ",
+            "     OOOOO      ",
+            "     GGGGG      ",
+            "    GDDGGDDG    ",
+            "    GSSGGSSG    ",
+            "    GSRGGSRG    ",
+            "    GSSSSSSG    ",
+            "     WWWWWW     ",
+            "    WWWWWWWW    ",
+            "   WWWWKWWWWW   ",
+            "    WWWWWWWW    ",
+            "      WWWW      ",
+            "     SSSSSS     ",
+            "    SSGGGGSS    ",
+            "   SSSGGGGSSS   ",
+            "   SSSSSSSSSS   "
+        ]);
     }
 };

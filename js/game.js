@@ -807,10 +807,22 @@ TGH.Game.prototype.renderLevelIntro = function (ctx, W, H) {
         ctx.lineWidth = 2;
         ctx.strokeRect(dX, dY, dW, dH);
         
+        var textOffsetX = 20;
+        var sprite = null;
+        if (this.levelData.dialog.speaker === 'Peach') sprite = TGH.Assets.sprites.portraitPeach;
+        else if (this.levelData.dialog.speaker === 'Bowser') sprite = TGH.Assets.sprites.portraitBowser;
+        else if (this.levelData.dialog.speaker === 'Kamek') sprite = TGH.Assets.sprites.portraitKamek;
+        else if (this.levelData.dialog.speaker === 'Bowser Jr.') sprite = TGH.Assets.sprites.portraitBowserJr;
+
+        if (sprite) {
+            ctx.drawImage(sprite, dX + 18, dY + 18);
+            textOffsetX = 100;
+        }
+
         ctx.textAlign = 'left';
         ctx.fillStyle = '#f8d830';
         ctx.font = '14px "Press Start 2P", monospace';
-        ctx.fillText(this.levelData.dialog.speaker + ":", dX + 20, dY + 30);
+        ctx.fillText(this.levelData.dialog.speaker + ":", dX + textOffsetX, dY + 30);
         
         ctx.fillStyle = '#ffffff';
         ctx.font = '10px "Press Start 2P", monospace';
@@ -821,15 +833,15 @@ TGH.Game.prototype.renderLevelIntro = function (ctx, W, H) {
         for (var i = 0; i < words.length; i++) {
             var testLine = line + words[i] + ' ';
             var metrics = ctx.measureText(testLine);
-            if (metrics.width > dW - 40 && i > 0) {
-                ctx.fillText(line, dX + 20, lineY);
+            if (metrics.width > dW - textOffsetX - 20 && i > 0) {
+                ctx.fillText(line, dX + textOffsetX, lineY);
                 line = words[i] + ' ';
                 lineY += 20;
             } else {
                 line = testLine;
             }
         }
-        ctx.fillText(line, dX + 20, lineY);
+        ctx.fillText(line, dX + textOffsetX, lineY);
     }
 
     var blink = Math.sin(this.animTime * 6) > 0;

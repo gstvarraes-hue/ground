@@ -912,10 +912,10 @@ TGH.DragonBoss = function (x, y, hp) {
     this.baseY = y;
     this.alive = true;
     this.animTimer = 0;
-    this.hp = hp || 10;
+    this.hp = hp || 20;
     this.maxHp = this.hp;
     this.shootTimer = 0;
-    this.shootInterval = 1.2;
+    this.shootInterval = 0.8;
     this.colorOverlay = 0;
     this.isDragon = true;
 };
@@ -926,8 +926,10 @@ TGH.DragonBoss.prototype.update = function (dt, game) {
     this.animTimer += dt;
     if (this.colorOverlay > 0) this.colorOverlay -= dt;
 
-    // Bob up and down faster and wider
-    this.y = this.baseY + Math.sin(this.animTimer * 3.5) * 60;
+    // Track player Y slowly and bob up and down
+    var targetY = game.player.y - this.h / 2;
+    this.baseY += (targetY - this.baseY) * 2 * dt;
+    this.y = this.baseY + Math.sin(this.animTimer * 5) * 50;
 
     // Shoot projectiles
     this.shootTimer -= dt;
@@ -935,11 +937,11 @@ TGH.DragonBoss.prototype.update = function (dt, game) {
         this.shootTimer = this.shootInterval;
         var pY = this.y + 64;
         var pX = this.x - 20;
-        game.lasers.push(new TGH.Laser(pX, pY, -1, 350));
-        game.lasers.push(new TGH.Laser(pX, pY + 30, -1, 300));
-        game.lasers.push(new TGH.Laser(pX, pY - 30, -1, 300));
-        game.lasers.push(new TGH.Laser(pX, pY + 60, -1, 250));
-        game.lasers.push(new TGH.Laser(pX, pY - 60, -1, 250));
+        game.lasers.push(new TGH.Laser(pX, pY, -1, 400));
+        game.lasers.push(new TGH.Laser(pX, pY + 40, -1, 350));
+        game.lasers.push(new TGH.Laser(pX, pY - 40, -1, 350));
+        game.lasers.push(new TGH.Laser(pX, pY + 80, -1, 300));
+        game.lasers.push(new TGH.Laser(pX, pY - 80, -1, 300));
     }
 };
 
@@ -964,12 +966,8 @@ TGH.DragonBoss.prototype.render = function (ctx, camX, camY) {
         ctx.filter = 'saturate(500%) hue-rotate(90deg)'; // Turn reddish/yellowish
     }
 
-    // Draw sprite mirrored (facing left)
-    ctx.save();
-    ctx.translate(px + this.w, py);
-    ctx.scale(-1, 1);
-    ctx.drawImage(TGH.Assets.sprites.dragon, 0, 0);
-    ctx.restore();
+    // Draw sprite
+    ctx.drawImage(TGH.Assets.sprites.dragon, px, py);
 
     ctx.globalAlpha = 1;
     ctx.filter = 'none';

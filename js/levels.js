@@ -46,9 +46,13 @@ TGH.Levels = {
             platforms: data.platforms || [],
             shooters: data.shooters || [],
             windZones: data.windZones || [],
+            lasers: data.lasers || [],
             buttons: data.buttons || [],
+            isCarLevel: data.isCarLevel || false,
+            isHomeLevel: data.isHomeLevel || false,
             boss: data.boss || null,
-            bgColor: data.bgColor || '#0c0c18'
+            bgColor: data.bgColor || '#0c0c18',
+            dialog: data.dialog || null
         };
     },
 
@@ -406,7 +410,7 @@ TGH.Levels = {
             subtitle: "Prisão de segurança máxima. Fase longa.",
             dialog: { speaker: "Kamek", text: "Não deixem o Bowser escapar!" },
             bgColor: '#1a1a24',
-            playerSpawn: { x: 2, y: 15 },
+            playerSpawn: { x: 2, y: 8 },
             map: [
                 "######################################################################################################################################################",
                 "#....................................................................................................................................................#",
