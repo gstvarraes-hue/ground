@@ -185,6 +185,9 @@ TGH.Game.prototype.onBlockHit = function(col, row) {
         if (this.player.powerState >= 1) {
             type = (Math.random() < 0.2) ? 2 : 1; // 20% Star, 80% Fire Flower
         }
+        if (this.currentLevel === 12) {
+            type = 3; // Red Star in Phase 13
+        }
         if (this.currentLevel === 13) {
             type = 2; // Always drop star in Phase 14
         }
@@ -355,6 +358,10 @@ TGH.Game.prototype.updatePlaying = function (dt) {
             } else if (pu.type === 2) {
                 this.player.invincibleTimer = 12.0; // 10s star power (plus 2s margin)
                 TGH.Particles.emit(this.player.x + this.player.w/2, this.player.y + this.player.h/2, 30, '#f8d830', 200);
+            } else if (pu.type === 3) {
+                this.player.hasRedStar = true;
+                this.player.powerState = 3;
+                TGH.Particles.emit(this.player.x + this.player.w/2, this.player.y + this.player.h/2, 50, '#ff0000', 300);
             }
             this.powerUps.splice(i, 1);
         }
@@ -476,7 +483,13 @@ TGH.Game.prototype.updatePlaying = function (dt) {
                     this.screenShake = 0.5;
                 }
             } else {
-                if (this.player.vy > 0 && playerBottom < bossCenterY + 20) {
+                if (this.player.powerState === 3) {
+                    this.boss.takeDamage();
+                    this.player.vx = (this.player.x < this.boss.x ? -1 : 1) * 500;
+                    this.player.vy = -400;
+                    this.screenShake = 0.5;
+                    TGH.Particles.emit(this.boss.x + this.boss.w/2, this.boss.y + this.boss.h/2, 50, '#ff0000', 300);
+                } else if (this.player.vy > 0 && playerBottom < bossCenterY + 20) {
                     this.player.vy = -400; // Bounce
                     TGH.Particles.emit(this.boss.x + this.boss.w/2, this.boss.y + this.boss.h/2, 30, '#ff4040', 200);
                     this.screenShake = 0.2;
@@ -826,6 +839,88 @@ TGH.Game.prototype.renderLevel = function (ctx, W, H) {
             ctx.fillRect(ex + Math.sin(tAnim * 10 + i) * 10, ey, eSize, eSize);
         }
 
+        // Defeated Bowser
+        var bx = 420 - camX;
+        var by = groundY - 15;
+        
+        // Shell (Green, bottom part since he's on his back)
+        ctx.fillStyle = '#1e5928';
+        ctx.beginPath();
+        ctx.arc(bx, by, 25, 0, Math.PI); // half circle facing down
+        ctx.fill();
+        // Spikes on shell
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(bx - 15, by); ctx.lineTo(bx - 20, by + 10); ctx.lineTo(bx - 10, by);
+        ctx.moveTo(bx + 15, by); ctx.lineTo(bx + 20, by + 10); ctx.lineTo(bx + 10, by);
+        ctx.moveTo(bx - 5, by); ctx.lineTo(bx, by + 12); ctx.lineTo(bx + 5, by);
+        ctx.fill();
+        
+        // Body / Belly (Yellowish)
+        ctx.fillStyle = '#ffddaa';
+        ctx.fillRect(bx - 18, by - 20, 36, 20); // square belly
+        
+        // Belly lines
+        ctx.fillStyle = '#d4a373';
+        ctx.fillRect(bx - 18, by - 15, 36, 2);
+        ctx.fillRect(bx - 18, by - 10, 36, 2);
+        ctx.fillRect(bx - 18, by - 5, 36, 2);
+
+        // Arms sprawled
+        ctx.fillStyle = '#ffcc00';
+        ctx.fillRect(bx - 35, by - 20, 20, 10);
+        ctx.fillRect(bx + 15, by - 20, 20, 10);
+        // Claws
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(bx - 40, by - 22, 5, 5);
+        ctx.fillRect(bx - 40, by - 18, 5, 5);
+        ctx.fillRect(bx + 35, by - 22, 5, 5);
+        ctx.fillRect(bx + 35, by - 18, 5, 5);
+
+        // Legs sprawled up
+        ctx.fillStyle = '#ffcc00';
+        ctx.fillRect(bx - 20, by - 35, 12, 15);
+        ctx.fillRect(bx + 8, by - 35, 12, 15);
+        // Feet
+        ctx.fillStyle = '#ddaa00';
+        ctx.fillRect(bx - 22, by - 40, 16, 5);
+        ctx.fillRect(bx + 6, by - 40, 16, 5);
+
+        // Head (tilted to side)
+        ctx.fillStyle = '#1e5928'; // Green top
+        ctx.beginPath();
+        ctx.arc(bx + 25, by - 15, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffcc00'; // Snout
+        ctx.beginPath();
+        ctx.arc(bx + 32, by - 10, 10, 0, Math.PI * 2);
+        ctx.fill();
+        // X eyes for knocked out
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bx + 20, by - 18); ctx.lineTo(bx + 25, by - 13);
+        ctx.moveTo(bx + 25, by - 18); ctx.lineTo(bx + 20, by - 13);
+        ctx.moveTo(bx + 28, by - 15); ctx.lineTo(bx + 33, by - 10);
+        ctx.moveTo(bx + 33, by - 15); ctx.lineTo(bx + 28, by - 10);
+        ctx.stroke();
+        // Orange hair
+        ctx.fillStyle = '#ffaa00';
+        ctx.beginPath();
+        ctx.moveTo(bx + 15, by - 20);
+        ctx.lineTo(bx + 10, by - 35);
+        ctx.lineTo(bx + 25, by - 25);
+        ctx.lineTo(bx + 20, by - 38);
+        ctx.lineTo(bx + 30, by - 25);
+        ctx.fill();
+
+        // Dizzy stars animation above head
+        ctx.fillStyle = '#ffff00';
+        for (var s = 0; s < 3; s++) {
+            var sx = bx + 25 + Math.cos(this.animTime * 3 + (s * Math.PI * 2 / 3)) * 15;
+            var sy = by - 35 + Math.sin(this.animTime * 3 + (s * Math.PI * 2 / 3)) * 5;
+            ctx.fillRect(sx, sy, 4, 4);
+        }
 
         // Toads
         var drawToad = function(tx, ty, bounce) {

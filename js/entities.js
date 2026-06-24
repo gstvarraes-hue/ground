@@ -72,10 +72,27 @@ TGH.Player.prototype.update = function (dt, tileMap) {
                 this.facingRight = true;
                 moving = true;
             }
+            if (this.coyoteTimer === undefined) {
+                this.coyoteTimer = 0;
+                this.jumpBufferTimer = 0;
+            }
+            if (this.grounded) {
+                this.coyoteTimer = 0.15; // 150ms coyote time
+            } else if (this.coyoteTimer > 0) {
+                this.coyoteTimer -= dt;
+            }
             if (input.wasPressed('ArrowUp')) {
+                this.jumpBufferTimer = 0.15; // 150ms buffer
+            } else if (this.jumpBufferTimer > 0) {
+                this.jumpBufferTimer -= dt;
+            }
+
+            if (this.jumpBufferTimer > 0 && (this.coyoteTimer > 0 || this.powerState === 3)) {
+                this.jumpBufferTimer = 0;
+                this.coyoteTimer = 0;
                 this.vy = -this.jumpForce;
                 this.grounded = false;
-                TGH.Particles.emit(this.x + this.w / 2, this.y + this.h, 10, '#ffffff', 50);
+                TGH.Particles.emit(this.x + this.w / 2, this.y + this.h, 10, this.powerState === 3 ? '#ff0000' : '#ffffff', 50);
                 if (TGH.Assets.jumpSound) {
                     TGH.Assets.jumpSound.currentTime = 0;
                     TGH.Assets.jumpSound.play().catch(function(e){});
@@ -183,6 +200,8 @@ TGH.Player.prototype.render = function (ctx, camX, camY) {
                 var hue = Math.floor(this.invincibleTimer * 360 * 3) % 360;
                 ctx.filter = 'hue-rotate(' + hue + 'deg) saturate(300%)';
             }
+        } else if (this.powerState === 3) {
+            ctx.filter = 'saturate(500%) brightness(80%) hue-rotate(320deg)';
         } else if (this.powerState === 2) {
             ctx.filter = 'hue-rotate(180deg) saturate(150%) brightness(120%)';
         }
@@ -250,6 +269,27 @@ TGH.PowerUp.prototype.update = function (dt, tileMap) {
 };
 
 TGH.PowerUp.prototype.render = function (ctx, camX, camY) {
+    if (this.type === 3) {
+        var px = Math.floor(this.x + this.w/2 - camX);
+        var py = Math.floor(this.y + this.h/2 - camY);
+        ctx.save();
+        ctx.translate(px, py);
+        var s = 0.8 + Math.sin(Date.now() / 150) * 0.1;
+        ctx.scale(s, s);
+        ctx.fillStyle = '#cc0000';
+        ctx.beginPath();
+        for(var i=0; i<5; i++) {
+            ctx.lineTo(Math.cos((18+i*72)/180*Math.PI)*12, -Math.sin((18+i*72)/180*Math.PI)*12);
+            ctx.lineTo(Math.cos((54+i*72)/180*Math.PI)*5, -Math.sin((54+i*72)/180*Math.PI)*5);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(-3, -2, 2, 4);
+        ctx.fillRect(1, -2, 2, 4);
+        ctx.restore();
+        return;
+    }
     var sprite = TGH.Assets.sprites.mushroom;
     if (this.type === 1) sprite = TGH.Assets.sprites.fireFlower;
     if (this.type === 2) sprite = TGH.Assets.sprites.star;
