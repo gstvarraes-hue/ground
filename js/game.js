@@ -40,6 +40,7 @@ TGH.Game.prototype.init = function () {
     function loop(ts) {
         var dt = Math.min((ts - self.lastTime) / 1000, 1 / 20);
         self.lastTime = ts;
+        if (TGH.Input.updateGamepad) TGH.Input.updateGamepad();
         self.update(dt);
         self.render();
         requestAnimationFrame(loop);
@@ -662,6 +663,7 @@ TGH.Game.prototype.renderLevel = function (ctx, W, H) {
     ctx.fillStyle = this.levelData.bgColor || '#0c0c18';
     ctx.fillRect(0, 0, W, H);
 
+
     // Background tiles
     var startCol = Math.floor(camX / T);
     var startRow = Math.floor(camY / T);
@@ -712,6 +714,166 @@ TGH.Game.prototype.renderLevel = function (ctx, W, H) {
                 ctx.drawImage(tiles.emptyBlock, dx, dy);
             }
         }
+    }
+
+    if (this.levelData.isVictoryLevel) {
+        var cx = 150 - camX; // Ship base position
+        var groundY = 10 * T - camY; // Floor Y
+
+        // Ship Hull
+        ctx.fillStyle = '#5c3a21'; // Dark wood
+        ctx.beginPath();
+        // Back of ship
+        ctx.moveTo(cx + 50, groundY);
+        ctx.lineTo(cx + 30, groundY - 80);
+        ctx.lineTo(cx + 100, groundY - 100);
+        ctx.lineTo(cx + 350, groundY - 80);
+        // Front of ship (bow)
+        ctx.lineTo(cx + 450, groundY - 20);
+        ctx.lineTo(cx + 420, groundY);
+        ctx.fill();
+        
+        // Deck / Upper structure
+        ctx.fillStyle = '#422511';
+        ctx.fillRect(cx + 80, groundY - 130, 120, 30);
+        ctx.fillRect(cx + 100, groundY - 160, 60, 30);
+
+        // Broken mast 1
+        ctx.fillStyle = '#2b1608';
+        ctx.fillRect(cx + 180, groundY - 220, 15, 140);
+        ctx.save();
+        ctx.translate(cx + 180, groundY - 180);
+        ctx.rotate(0.8);
+        ctx.fillRect(0, 0, 12, 100);
+        ctx.restore();
+
+        // Broken mast 2
+        ctx.fillStyle = '#2b1608';
+        ctx.fillRect(cx + 300, groundY - 160, 12, 80);
+        ctx.save();
+        ctx.translate(cx + 300, groundY - 150);
+        ctx.rotate(-1.2);
+        ctx.fillRect(0, 0, 10, 120);
+        ctx.restore();
+
+        // Bowser head figurehead (broken)
+        ctx.fillStyle = '#1e5928'; // Green
+        ctx.beginPath();
+        ctx.arc(cx + 460, groundY - 30, 25, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.fillRect(cx + 465, groundY - 40, 15, 10); // broken eye
+        
+        // Giant cracks/holes in hull
+        ctx.fillStyle = '#111';
+        ctx.beginPath();
+        ctx.arc(cx + 250, groundY - 40, 30, 0, Math.PI);
+        ctx.arc(cx + 120, groundY - 60, 20, 0, Math.PI*2);
+        ctx.fill();
+
+        // Animated Fire and Smoke
+        var tAnim = this.animTime * 3;
+        
+        // Smoke
+        ctx.save();
+        for (var i = 0; i < 20; i++) {
+            var sx = cx + 100 + (i * 15) + Math.sin(tAnim + i) * 20;
+            var syOffset = (tAnim * 50 + i * 40) % 150;
+            var sy = groundY - 50 - syOffset;
+            var alpha = Math.max(0, 1 - (syOffset / 150));
+            ctx.globalAlpha = alpha * 0.6;
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(sx, sy, 20 + (syOffset / 5), 0, Math.PI*2);
+            ctx.fill();
+        }
+        ctx.restore();
+
+        // Fire
+        for (var i = 0; i < 30; i++) {
+            var phase = tAnim * 5 + i;
+            var fx = cx + 80 + Math.random() * 320;
+            if (i < 10) fx = cx + 230 + Math.random() * 40; // hole 1
+            else if (i < 20) fx = cx + 110 + Math.random() * 30; // hole 2
+            else if (i < 25) fx = cx + 180 + Math.random() * 40; // deck
+
+            var fyBase = groundY - 40 - Math.random() * 40;
+            if (fx > cx + 80 && fx < cx + 200 && fyBase > groundY - 80) fyBase = groundY - 130;
+
+            var fy = fyBase + Math.sin(phase) * 15;
+            var size = 10 + Math.random() * 15;
+            
+            ctx.fillStyle = '#cc0000';
+            ctx.beginPath();
+            ctx.arc(fx, fy, size, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#ff6600';
+            ctx.beginPath();
+            ctx.arc(fx, fy + 2, size * 0.7, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#ffcc00';
+            ctx.beginPath();
+            ctx.arc(fx, fy + 4, size * 0.4, 0, Math.PI*2);
+            ctx.fill();
+        }
+        
+        // Embers / Sparks
+        ctx.fillStyle = '#ffff66';
+        for (var i = 0; i < 15; i++) {
+            var ex = cx + 100 + (tAnim * 100 + i * 73) % 300;
+            var ey = groundY - 20 - ((tAnim * 150 + i * 91) % 200);
+            var eSize = Math.random() * 3 + 1;
+            ctx.fillRect(ex + Math.sin(tAnim * 10 + i) * 10, ey, eSize, eSize);
+        }
+
+
+        // Toads
+        var drawToad = function(tx, ty, bounce) {
+            var by = ty - Math.abs(Math.sin(this.animTime * 8 + bounce)) * 10;
+            ctx.fillStyle = '#ffffff'; // mushroom head
+            ctx.beginPath();
+            ctx.arc(tx, by - 15, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ff0000'; // red spots
+            ctx.beginPath();
+            ctx.arc(tx - 6, by - 18, 4, 0, Math.PI * 2);
+            ctx.arc(tx + 6, by - 18, 4, 0, Math.PI * 2);
+            ctx.arc(tx, by - 22, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fce5cd'; // face
+            ctx.fillRect(tx - 8, by - 10, 16, 12);
+            ctx.fillStyle = '#0000ff'; // body
+            ctx.fillRect(tx - 6, by + 2, 12, 10);
+            ctx.fillStyle = '#000000'; // eyes
+            ctx.fillRect(tx - 4, by - 6, 2, 4);
+            ctx.fillRect(tx + 2, by - 6, 2, 4);
+        }.bind(this);
+
+        drawToad(200 - camX, groundY - 12, 0);
+        drawToad(280 - camX, groundY - 12, 1);
+        drawToad(350 - camX, groundY - 12, 2);
+
+        // Peach
+        var px = 240 - camX;
+        var py = groundY - 20 - Math.abs(Math.sin(this.animTime * 6)) * 5;
+        ctx.fillStyle = '#ff88aa'; // dress
+        ctx.beginPath();
+        ctx.moveTo(px, py - 20);
+        ctx.lineTo(px - 15, py + 20);
+        ctx.lineTo(px + 15, py + 20);
+        ctx.fill();
+        ctx.fillStyle = '#fce5cd'; // face
+        ctx.fillRect(px - 8, py - 35, 16, 16);
+        ctx.fillStyle = '#ffcc00'; // hair
+        ctx.fillRect(px - 10, py - 35, 20, 8);
+        ctx.fillRect(px - 12, py - 27, 6, 15);
+        ctx.fillRect(px + 6, py - 27, 6, 15);
+        // crown
+        ctx.fillStyle = '#ffdd00';
+        ctx.fillRect(px - 6, py - 42, 12, 7);
+        ctx.fillStyle = '#000000'; // eyes
+        ctx.fillRect(px - 4, py - 30, 2, 4);
+        ctx.fillRect(px + 2, py - 30, 2, 4);
     }
 
     // Wind zones

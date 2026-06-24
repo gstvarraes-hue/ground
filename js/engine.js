@@ -79,6 +79,48 @@ TGH.Input = {
 
     clearJustPressed: function () {
         this.justPressed = {};
+    },
+
+    updateGamepad: function () {
+        if (!navigator.getGamepads) return;
+        var gamepads = navigator.getGamepads();
+        var gp = null;
+        for (var i = 0; i < gamepads.length; i++) {
+            if (gamepads[i]) {
+                gp = gamepads[i];
+                break;
+            }
+        }
+        if (!gp) return;
+
+        if (!this.gpKeys) this.gpKeys = {};
+
+        var mapping = {
+            'ArrowUp': gp.buttons[0] && gp.buttons[0].pressed,
+            'c': gp.buttons[2] && gp.buttons[2].pressed,
+            'z': gp.buttons[7] && gp.buttons[7].pressed,
+            'ArrowLeft': (gp.buttons[14] && gp.buttons[14].pressed) || (gp.axes[0] < -0.5),
+            'ArrowRight': (gp.buttons[15] && gp.buttons[15].pressed) || (gp.axes[0] > 0.5),
+            'ArrowDown': (gp.buttons[13] && gp.buttons[13].pressed) || (gp.axes[1] > 0.5)
+        };
+
+        for (var key in mapping) {
+            var isPressed = mapping[key];
+            if (isPressed) {
+                if (!this.keys[key]) {
+                    this.justPressed[key] = true;
+                }
+                this.keys[key] = true;
+                this.gpKeys[key] = true;
+                this.justPressed['Click'] = true;
+                this.justPressed['Enter'] = true;
+            } else {
+                if (this.gpKeys[key]) {
+                    this.keys[key] = false;
+                    this.gpKeys[key] = false;
+                }
+            }
+        }
     }
 };
 

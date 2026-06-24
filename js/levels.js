@@ -50,13 +50,14 @@ TGH.Levels = {
             buttons: data.buttons || [],
             isCarLevel: data.isCarLevel || false,
             isHomeLevel: data.isHomeLevel || false,
+            isVictoryLevel: data.isVictoryLevel || false,
             boss: data.boss || null,
             bgColor: data.bgColor || '#0c0c18',
             dialog: data.dialog || null
         };
     },
 
-    count: 14,
+    count: 15,
 
     data: [
         // ═══════════════════════════════════════
@@ -520,6 +521,32 @@ TGH.Levels = {
                 "#..............................#",
                 "#..............................#",
                 "#...####.......##.......####...#",
+                "#..............................#",
+                "#.............................E#",
+                "################################",
+            ],
+            enemies: []
+        },
+
+        // ═══════════════════════════════════════
+        // FASE 15: A Vitória no Reino Cogumelo
+        // ═══════════════════════════════════════
+        {
+            name: "Fase 15: A Vitória",
+            subtitle: "Parabéns, você salvou o Reino Cogumelo!",
+            dialog: { speaker: "Peach", text: "Muito obrigada por nos salvar, Mario! O Reino Cogumelo está em paz novamente!" },
+            bgColor: '#87CEEB', // Mushroom Kingdom sky blue
+            playerSpawn: { x: 3, y: 8 },
+            isVictoryLevel: true,
+            map: [
+                "################################",
+                "#..............................#",
+                "#..............................#",
+                "#..............................#",
+                "#..............................#",
+                "#..............................#",
+                "#..............................#",
+                "#..............................#",
                 "#..............................#",
                 "#.............................E#",
                 "################################",
